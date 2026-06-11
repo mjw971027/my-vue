@@ -20381,3 +20381,15 @@ Unconditional classes:
 2026-06-11 14:10:58.387  INFO 36592 --- [main] com.mjw.vueback.VueBackApplication       : Started VueBackApplication in 6.748 seconds (JVM running for 7.51)
 2026-06-11 14:10:58.390 DEBUG 36592 --- [main] o.s.b.a.ApplicationAvailabilityBean      : Application availability state LivenessState changed to CORRECT
 2026-06-11 14:10:58.393 DEBUG 36592 --- [main] o.s.b.a.ApplicationAvailabilityBean      : Application availability state ReadinessState changed to ACCEPTING_TRAFFIC
+2026-06-11 14:13:12.119 DEBUG 36592 --- [SpringApplicationShutdownHook] o.s.b.a.ApplicationAvailabilityBean      : Application availability state ReadinessState changed from ACCEPTING_TRAFFIC to REFUSING_TRAFFIC
+2026-06-11 14:13:12.119 DEBUG 36592 --- [SpringApplicationShutdownHook] ConfigServletWebServerApplicationContext : Closing org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@3246fb96, started on Thu Jun 11 14:10:52 CST 2026
+2026-06-11 14:13:12.121 DEBUG 36592 --- [SpringApplicationShutdownHook] o.s.c.support.DefaultLifecycleProcessor  : Stopping beans in phase 2147483647
+2026-06-11 14:13:12.123 DEBUG 36592 --- [SpringApplicationShutdownHook] o.s.c.support.DefaultLifecycleProcessor  : Bean 'webServerGracefulShutdown' completed its stop procedure
+2026-06-11 14:13:12.123 DEBUG 36592 --- [SpringApplicationShutdownHook] o.s.c.support.DefaultLifecycleProcessor  : Stopping beans in phase 2147483646
+2026-06-11 14:13:12.428 DEBUG 36592 --- [SpringApplicationShutdownHook] o.s.c.support.DefaultLifecycleProcessor  : Bean 'webServerStartStop' completed its stop procedure
+2026-06-11 14:13:12.428 DEBUG 36592 --- [SpringApplicationShutdownHook] o.s.c.support.DefaultLifecycleProcessor  : Stopping beans in phase -2147483647
+2026-06-11 14:13:12.428 DEBUG 36592 --- [SpringApplicationShutdownHook] o.s.c.support.DefaultLifecycleProcessor  : Bean 'springBootLoggingLifecycle' completed its stop procedure
+2026-06-11 14:13:12.429 DEBUG 36592 --- [SpringApplicationShutdownHook] o.s.d.r.l.RedisMessageListenerContainer  : Stopped RedisMessageListenerContainer
+2026-06-11 14:13:12.429 DEBUG 36592 --- [SpringApplicationShutdownHook] o.s.s.concurrent.ThreadPoolTaskExecutor  : Shutting down ExecutorService 'applicationTaskExecutor'
+2026-06-11 14:13:12.430  INFO 36592 --- [SpringApplicationShutdownHook] com.alibaba.druid.pool.DruidDataSource   : {dataSource-1} closing ...
+2026-06-11 14:13:12.447  INFO 36592 --- [SpringApplicationShutdownHook] com.alibaba.druid.pool.DruidDataSource   : {dataSource-1} closed
