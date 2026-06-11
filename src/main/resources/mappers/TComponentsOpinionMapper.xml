@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mjw.vueback.demos.web.mapper.TComponentsOpinionMapper">
+    
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.mjw.vueback.demos.web.entity.TComponentsOpinion">
+        <id column="GUID" property="guid" />
+        <result column="COMPONENTS_ID" property="componentsId" />
+        <result column="OPINION_TYPE" property="opinionType" />
+        <result column="OPINION_CONTENT" property="opinionContent" />
+        <result column="AUDIT_USER_ID" property="auditUserId" />
+        <result column="AUDIT_USER_NAME" property="auditUserName" />
+        <result column="AUDIT_DATE" property="auditDate" />
+        <result column="CREATE_USER_ID" property="createUserId" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="UPDATE_USER_ID" property="updateUserId" />
+        <result column="UPDATE_DATE" property="updateDate" />
+    </resultMap>
+    
+    <!-- 根据 GUID 查询 -->
+    <select id="selectByGuid" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_OPINION WHERE GUID = #{guid}
+    </select>
+    
+    <!-- 根据工装申请ID查询意见列表 -->
+    <select id="selectByComponentsId" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_OPINION WHERE COMPONENTS_ID = #{componentsId}
+        ORDER BY CREATE_DATE DESC
+    </select>
+    
+    <!-- 根据条件查询列表 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_OPINION
+        <where>
+            <if test="guid != null and guid != ''">
+                AND GUID = #{guid}
+            </if>
+            <if test="componentsId != null and componentsId != ''">
+                AND COMPONENTS_ID = #{componentsId}
+            </if>
+            <if test="opinionType != null and opinionType != ''">
+                AND OPINION_TYPE = #{opinionType}
+            </if>
+            <if test="auditUserId != null and auditUserId != ''">
+                AND AUDIT_USER_ID = #{auditUserId}
+            </if>
+        </where>
+        ORDER BY CREATE_DATE DESC
+    </select>
+    
+    <!-- 插入 -->
+    <insert id="insert" parameterType="com.mjw.vueback.demos.web.entity.TComponentsOpinion">
+        INSERT INTO T_COMPONENTS_OPINION (
+            GUID, COMPONENTS_ID, OPINION_TYPE, OPINION_CONTENT,
+            AUDIT_USER_ID, AUDIT_USER_NAME, AUDIT_DATE,
+            CREATE_USER_ID, CREATE_DATE, UPDATE_USER_ID, UPDATE_DATE
+        ) VALUES (
+            #{guid}, #{componentsId}, #{opinionType}, #{opinionContent},
+            #{auditUserId}, #{auditUserName}, #{auditDate},
+            #{createUserId}, #{createDate}, #{updateUserId}, #{updateDate}
+        )
+    </insert>
+    
+    <!-- 根据 GUID 更新 -->
+    <update id="updateByGuid" parameterType="com.mjw.vueback.demos.web.entity.TComponentsOpinion">
+        UPDATE T_COMPONENTS_OPINION
+        <set>
+            <if test="componentsId != null">COMPONENTS_ID = #{componentsId},</if>
+            <if test="opinionType != null">OPINION_TYPE = #{opinionType},</if>
+            <if test="opinionContent != null">OPINION_CONTENT = #{opinionContent},</if>
+            <if test="auditUserId != null">AUDIT_USER_ID = #{auditUserId},</if>
+            <if test="auditUserName != null">AUDIT_USER_NAME = #{auditUserName},</if>
+            <if test="auditDate != null">AUDIT_DATE = #{auditDate},</if>
+            <if test="updateUserId != null">UPDATE_USER_ID = #{updateUserId},</if>
+            <if test="updateDate != null">UPDATE_DATE = #{updateDate},</if>
+        </set>
+        WHERE GUID = #{guid}
+    </update>
+    
+    <!-- 根据 GUID 删除 -->
+    <delete id="deleteByGuid">
+        DELETE FROM T_COMPONENTS_OPINION WHERE GUID = #{guid}
+    </delete>
+    
+    <!-- 根据工装申请ID删除所有意见 -->
+    <delete id="deleteByComponentsId">
+        DELETE FROM T_COMPONENTS_OPINION WHERE COMPONENTS_ID = #{componentsId}
+    </delete>
+    
+    <!-- 插入非空字段 -->
+    <insert id="insertSelective" parameterType="com.mjw.vueback.demos.web.entity.TComponentsOpinion">
+        INSERT INTO T_COMPONENTS_OPINION
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="guid != null">GUID,</if>
+            <if test="componentsId != null">COMPONENTS_ID,</if>
+            <if test="opinionType != null">OPINION_TYPE,</if>
+            <if test="opinionContent != null">OPINION_CONTENT,</if>
+            <if test="auditUserId != null">AUDIT_USER_ID,</if>
+            <if test="auditUserName != null">AUDIT_USER_NAME,</if>
+            <if test="auditDate != null">AUDIT_DATE,</if>
+            <if test="createUserId != null">CREATE_USER_ID,</if>
+            <if test="createDate != null">CREATE_DATE,</if>
+            <if test="updateUserId != null">UPDATE_USER_ID,</if>
+            <if test="updateDate != null">UPDATE_DATE,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="guid != null">#{guid},</if>
+            <if test="componentsId != null">#{componentsId},</if>
+            <if test="opinionType != null">#{opinionType},</if>
+            <if test="opinionContent != null">#{opinionContent},</if>
+            <if test="auditUserId != null">#{auditUserId},</if>
+            <if test="auditUserName != null">#{auditUserName},</if>
+            <if test="auditDate != null">#{auditDate},</if>
+            <if test="createUserId != null">#{createUserId},</if>
+            <if test="createDate != null">#{createDate},</if>
+            <if test="updateUserId != null">#{updateUserId},</if>
+            <if test="updateDate != null">#{updateDate},</if>
+        </trim>
+    </insert>
+    
+    <!-- 根据GUID更新非空字段 -->
+    <update id="updateByGuidSelective" parameterType="com.mjw.vueback.demos.web.entity.TComponentsOpinion">
+        UPDATE T_COMPONENTS_OPINION
+        <set>
+            <if test="componentsId != null">COMPONENTS_ID = #{componentsId},</if>
+            <if test="opinionType != null">OPINION_TYPE = #{opinionType},</if>
+            <if test="opinionContent != null">OPINION_CONTENT = #{opinionContent},</if>
+            <if test="auditUserId != null">AUDIT_USER_ID = #{auditUserId},</if>
+            <if test="auditUserName != null">AUDIT_USER_NAME = #{auditUserName},</if>
+            <if test="auditDate != null">AUDIT_DATE = #{auditDate},</if>
+            <if test="updateUserId != null">UPDATE_USER_ID = #{updateUserId},</if>
+            <if test="updateDate != null">UPDATE_DATE = #{updateDate},</if>
+        </set>
+        WHERE GUID = #{guid}
+    </update>
+    
+</mapper>

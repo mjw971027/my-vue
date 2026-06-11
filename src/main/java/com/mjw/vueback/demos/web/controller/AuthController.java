@@ -3,6 +3,7 @@ package com.mjw.vueback.demos.web.controller;
 import com.mjw.vueback.demos.web.common.ApiResponse;
 import com.mjw.vueback.demos.web.entity.SysUser;
 import com.mjw.vueback.demos.web.security.JwtTokenUtil;
+import com.mjw.vueback.demos.web.security.TokenBlacklistService;
 import com.mjw.vueback.demos.web.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,8 +35,16 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
+
+
+
     @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
+
+    @Value("${jwt.secret:mySecretKey123456789012345678901234567890}")
+    private String jwtSecret;
 
     // 登录接口
     @PostMapping("/login")
@@ -99,10 +109,47 @@ public class AuthController {
 
     // 退出登录接口
     @PostMapping("/logout")
-    public ApiResponse<String> logout() {
-        // JWT 是无状态的，后端不需要做特殊处理
-        // 前端会清除本地存储的 Token
-        return ApiResponse.success("退出成功");
+    public ApiResponse<String> logout(HttpServletRequest request) {
+        try {
+            System.out.println("=== 收到退出登录请求 ===");
+            System.out.println("请求URI: " + request.getRequestURI());
+            System.out.println("Authorization Header: " + request.getHeader("Authorization"));
+            
+            // 获取请求中的 Token
+            String token = extractTokenFromRequest(request);
+            System.out.println("提取的Token: " + (token != null ? token.substring(0, Math.min(20, token.length())) + "..." : "null"));
+            
+            if (token != null) {
+                // 获取 Token 的剩余过期时间（秒）
+                long expiration = jwtTokenUtil.getExpirationFromToken(token);
+                System.out.println("Token剩余过期时间（秒）: " + expiration);
+                
+                // 将 Token 加入黑名单
+                tokenBlacklistService.addToBlacklist(token, expiration);
+                
+                // 验证是否添加成功
+                boolean isBlacklisted = tokenBlacklistService.isBlacklisted(token);
+                System.out.println("验证黑名单状态: " + isBlacklisted);
+                
+                return ApiResponse.success("退出成功");
+            }
+            return ApiResponse.error(400, "未找到 Token");
+        } catch (Exception e) {
+            System.out.println("退出登录异常: " + e.getMessage());
+            e.printStackTrace();
+            return ApiResponse.error(500, "退出失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 从请求中提取 Token
+     */
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 
     // 刷新 Token 接口

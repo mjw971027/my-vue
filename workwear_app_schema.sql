@@ -1,0 +1,228 @@
+-- =====================================================
+-- 工装申请系统 - 数据库表创建SQL
+-- 数据库: MySQL
+-- 字符集: utf8mb4
+-- 基于 MyBatis XML 映射文件生成
+-- =====================================================
+
+-- 创建数据库（如果不存在）
+CREATE DATABASE IF NOT EXISTS DCM DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+USE DCM;
+
+-- =====================================================
+-- 1. 主表: T_COMPONENTS (工装申请表)
+-- 对应文件: TComponentsDao.xml
+-- =====================================================
+
+DROP TABLE IF EXISTS T_COMPONENTS;
+
+CREATE TABLE T_COMPONENTS (
+    GUID VARCHAR(64) NOT NULL COMMENT '唯一标识GUID',
+    BILL_NO VARCHAR(50) NOT NULL COMMENT '申请单号',
+    COMPANY_NO VARCHAR(50) COMMENT '公司主体代码',
+    DEPT_NO VARCHAR(50) COMMENT '申请部门代码',
+    COMPONENTS_NAME VARCHAR(200) COMMENT '项目名称',
+    PROJ_NO VARCHAR(50) COMMENT '工程号',
+    DIV_CD VARCHAR(2) COMMENT '工装类别代码: 01-生产通用,02-生产专用,03-安措,04-科研通用,05-科研专用',
+    NUMBER_NO DECIMAL(10,2) DEFAULT 0 COMMENT '申请数量',
+    FINAL_NUMBER_NO DECIMAL(10,2) DEFAULT 0 COMMENT '最终审核数',
+    APPOINT_DUTY_DEPT_YN VARCHAR(1) COMMENT '是否指定责任部门',
+    DWGNO VARCHAR(100) COMMENT '图号',
+    MATERIAL_TOTAL_COST VARCHAR(100) COMMENT '材料总成本',
+    MH_BDGT VARCHAR(100) COMMENT '人工预算',
+    CREATE_USER_ID VARCHAR(50) COMMENT '创建用户ID',
+    CREATE_DATE DATE COMMENT '创建日期',
+    NEED_DATE DATE COMMENT '需求日期',
+    UPDATE_USER_ID VARCHAR(50) COMMENT '更新用户ID',
+    UPDATE_DATE DATE COMMENT '更新日期',
+    REMARK VARCHAR(500) COMMENT '备注',
+    MA_PROCESS_ID VARCHAR(100) COMMENT '流程ID(BPM流程实例ID)',
+    MA_STATUS VARCHAR(2) DEFAULT '01' COMMENT '申请状态: 00-退回, 01-编制, 02-审批, 03-完成, 04-设计出图, 05-设计出图审批',
+    TEL VARCHAR(50) COMMENT '联系电话',
+    APP_DATE DATE COMMENT '申请日期',
+    DESIGN_STATUS VARCHAR(2) COMMENT '设计状态',
+    BO_ID VARCHAR(100) COMMENT '业务对象ID',
+    PRIMARY KEY (GUID),
+    UNIQUE KEY UK_BILL_NO (BILL_NO),
+    KEY IDX_COMPANY_NO (COMPANY_NO),
+    KEY IDX_DEPT_NO (DEPT_NO),
+    KEY IDX_PROJ_NO (PROJ_NO),
+    KEY IDX_MA_STATUS (MA_STATUS),
+    KEY IDX_CREATE_DATE (CREATE_DATE),
+    KEY IDX_CREATE_USER_ID (CREATE_USER_ID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工装申请表';
+
+-- =====================================================
+-- 2. 明细表: T_COMPONENTS_LINE (工装申请明细表)
+-- 对应文件: TComponentsLineDao.xml
+-- =====================================================
+
+DROP TABLE IF EXISTS T_COMPONENTS_LINE;
+
+CREATE TABLE T_COMPONENTS_LINE (
+    GUID VARCHAR(64) NOT NULL COMMENT '唯一标识GUID',
+    COMPONENTS_ID VARCHAR(64) NOT NULL COMMENT '工装申请ID(外键->T_COMPONENTS.GUID)',
+    ACTIVATION VARCHAR(100) COMMENT '激活/生效标识',
+    MATERIAL_NO VARCHAR(50) COMMENT '物资编码',
+    MATERIAL_NAME VARCHAR(200) COMMENT '物资名称',
+    UNIT VARCHAR(50) COMMENT '单位',
+    DEMAND_QTY DECIMAL(10,2) DEFAULT 0 COMMENT '需求数量',
+    FINAL_DEMAND_QTY DECIMAL(10,2) DEFAULT 0 COMMENT '最终需求数量',
+    MATERIAL_COST DECIMAL(10,2) COMMENT '材料成本',
+    MATERIAL_SOURCES VARCHAR(50) COMMENT '物资来源',
+    REMARK VARCHAR(500) COMMENT '备注',
+    QUALITY VARCHAR(100) COMMENT '材质/质量等级',
+    THK1 DECIMAL(10,2) COMMENT '厚度1',
+    THK2 DECIMAL(10,2) COMMENT '厚度2',
+    W1 DECIMAL(10,2) COMMENT '宽度1',
+    W2 DECIMAL(10,2) COMMENT '宽度2',
+    L DECIMAL(10,2) COMMENT '长度',
+    CREATE_NODE VARCHAR(100) COMMENT '创建节点',
+    CREATE_USER_ID VARCHAR(50) COMMENT '创建用户ID',
+    CREATE_DATE DATE COMMENT '创建日期',
+    UPDATE_USER_ID VARCHAR(50) COMMENT '更新用户ID',
+    UPDATE_DATE DATE COMMENT '更新日期',
+    BO_ID VARCHAR(100) COMMENT '业务对象ID',
+    PRIMARY KEY (GUID),
+    KEY IDX_COMPONENTS_ID (COMPONENTS_ID),
+    KEY IDX_MATERIAL_NO (MATERIAL_NO),
+    KEY IDX_CREATE_DATE (CREATE_DATE)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工装申请明细表';
+
+-- =====================================================
+-- 3. 附件表: T_COMPONENTS_ATT (工装申请附件表)
+-- 对应文件: TComponentsAttDao.xml
+-- =====================================================
+
+DROP TABLE IF EXISTS T_COMPONENTS_ATT;
+
+CREATE TABLE T_COMPONENTS_ATT (
+    GUID VARCHAR(64) NOT NULL COMMENT '唯一标识GUID',
+    COMPONENTS_ID VARCHAR(64) COMMENT '工装申请ID(外键->T_COMPONENTS.GUID)',
+    FILE_NAME VARCHAR(200) COMMENT '文件名',
+    FILE_PATH VARCHAR(500) COMMENT '文件路径',
+    FILE_SIZE VARCHAR(50) COMMENT '文件大小',
+    FILE_TYPE VARCHAR(50) COMMENT '文件类型',
+    CREATE_USER_ID VARCHAR(50) COMMENT '创建用户ID',
+    CREATE_DATE DATE COMMENT '创建日期',
+    UPDATE_USER_ID VARCHAR(50) COMMENT '更新用户ID',
+    UPDATE_DATE DATE COMMENT '更新日期',
+    REMARK VARCHAR(500) COMMENT '备注',
+    PRIMARY KEY (GUID),
+    KEY IDX_COMPONENTS_ID (COMPONENTS_ID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工装申请附件表';
+
+-- =====================================================
+-- 4. 附件数据表: T_COMPONENTS_ATT_DATA (工装申请附件数据表)
+-- 对应文件: TComponentsAttDataDao.xml
+-- =====================================================
+
+DROP TABLE IF EXISTS T_COMPONENTS_ATT_DATA;
+
+CREATE TABLE T_COMPONENTS_ATT_DATA (
+    GUID VARCHAR(64) NOT NULL COMMENT '唯一标识GUID',
+    ATT_ID VARCHAR(64) COMMENT '附件ID(外键->T_COMPONENTS_ATT.GUID)',
+    FILE_DATA LONGBLOB COMMENT '文件二进制数据',
+    CREATE_USER_ID VARCHAR(50) COMMENT '创建用户ID',
+    CREATE_DATE DATE COMMENT '创建日期',
+    PRIMARY KEY (GUID),
+    KEY IDX_ATT_ID (ATT_ID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工装申请附件数据表';
+
+-- =====================================================
+-- 5. 意见表: T_COMPONENTS_OPINION (工装申请审批意见表)
+-- 对应文件: TComponentsOpinionDao.xml
+-- =====================================================
+
+DROP TABLE IF EXISTS T_COMPONENTS_OPINION;
+
+CREATE TABLE T_COMPONENTS_OPINION (
+    GUID VARCHAR(64) NOT NULL COMMENT '唯一标识GUID',
+    COMPONENTS_ID VARCHAR(64) COMMENT '工装申请ID(外键->T_COMPONENTS.GUID)',
+    OPINION_TYPE VARCHAR(2) COMMENT '意见类型',
+    OPINION_CONTENT VARCHAR(1000) COMMENT '意见内容',
+    AUDIT_USER_ID VARCHAR(50) COMMENT '审核人ID',
+    AUDIT_USER_NAME VARCHAR(100) COMMENT '审核人姓名',
+    AUDIT_DATE DATE COMMENT '审核日期',
+    CREATE_USER_ID VARCHAR(50) COMMENT '创建用户ID',
+    CREATE_DATE DATE COMMENT '创建日期',
+    UPDATE_USER_ID VARCHAR(50) COMMENT '更新用户ID',
+    UPDATE_DATE DATE COMMENT '更新日期',
+    PRIMARY KEY (GUID),
+    KEY IDX_COMPONENTS_ID (COMPONENTS_ID),
+    KEY IDX_AUDIT_USER_ID (AUDIT_USER_ID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工装申请审批意见表';
+
+-- =====================================================
+-- 6. 引用表: T_COMPONENTS_QUOTE (工装申请引用/报价表)
+-- 对应文件: TComponentsQuoteDao.xml
+-- =====================================================
+
+DROP TABLE IF EXISTS T_COMPONENTS_QUOTE;
+
+CREATE TABLE T_COMPONENTS_QUOTE (
+    GUID VARCHAR(64) NOT NULL COMMENT '唯一标识GUID',
+    COMPONENT_ID VARCHAR(64) COMMENT '工装ID(外键->T_COMPONENTS.GUID)',
+    IS_USED VARCHAR(2) COMMENT '是否使用: 01-是, 02-否',
+    IS_QUOTED VARCHAR(2) COMMENT '是否引用: 01-否, 02-是',
+    COM_DATE DATE COMMENT '完成日期',
+    CREATE_USER_ID VARCHAR(50) COMMENT '创建用户ID',
+    CREATE_DATE DATE COMMENT '创建日期',
+    UPDATE_USER_ID VARCHAR(50) COMMENT '更新用户ID',
+    UPDATE_DATE DATE COMMENT '更新日期',
+    REMARK VARCHAR(500) COMMENT '备注',
+    PRIMARY KEY (GUID),
+    KEY IDX_COMPONENT_ID (COMPONENT_ID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工装申请引用/报价表';
+
+-- =====================================================
+-- 外键约束 (可选，根据实际需要启用)
+-- =====================================================
+
+-- ALTER TABLE T_COMPONENTS_LINE 
+-- ADD CONSTRAINT FK_COMPONENTS_LINE_COMPONENTS_ID 
+-- FOREIGN KEY (COMPONENTS_ID) REFERENCES T_COMPONENTS(GUID);
+
+-- ALTER TABLE T_COMPONENTS_ATT 
+-- ADD CONSTRAINT FK_COMPONENTS_ATT_COMPONENTS_ID 
+-- FOREIGN KEY (COMPONENTS_ID) REFERENCES T_COMPONENTS(GUID);
+
+-- ALTER TABLE T_COMPONENTS_OPINION 
+-- ADD CONSTRAINT FK_COMPONENTS_OPINION_COMPONENTS_ID 
+-- FOREIGN KEY (COMPONENTS_ID) REFERENCES T_COMPONENTS(GUID);
+
+-- ALTER TABLE T_COMPONENTS_QUOTE 
+-- ADD CONSTRAINT FK_COMPONENTS_QUOTE_COMPONENT_ID 
+-- FOREIGN KEY (COMPONENT_ID) REFERENCES T_COMPONENTS(GUID);
+
+-- =====================================================
+-- 示例数据插入 (可选，用于测试)
+-- =====================================================
+
+-- 插入示例主表数据
+-- INSERT INTO T_COMPONENTS (
+--     GUID, BILL_NO, COMPANY_NO, DEPT_NO, COMPONENTS_NAME, 
+--     PROJ_NO, DIV_CD, NUMBER_NO, FINAL_NUMBER_NO, 
+--     CREATE_USER_ID, CREATE_DATE, MA_STATUS, APP_DATE
+-- ) VALUES (
+--     UUID(), 'J202401010001', 'COMP001', 'DEPT001', '测试工装项目',
+--     'PROJ001', '01', 10.00, 10.00,
+--     'admin', CURDATE(), '01', CURDATE()
+-- );
+
+-- 插入示例明细数据
+-- INSERT INTO T_COMPONENTS_LINE (
+--     GUID, COMPONENTS_ID, MATERIAL_NAME, UNIT, DEMAND_QTY, 
+--     FINAL_DEMAND_QTY, CREATE_USER_ID, CREATE_DATE
+-- ) VALUES (
+--     UUID(), 
+--     (SELECT GUID FROM T_COMPONENTS WHERE BILL_NO = 'J202401010001'),
+--     '钢板', 'KG', 100.00, 100.00,
+--     'admin', CURDATE()
+-- );
+
+-- =====================================================
+-- 创建成功提示
+-- =====================================================
+SELECT 'T_COMPONENTS 及相关表创建成功!' AS MESSAGE;

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mjw.vueback.demos.web.mapper.TComponentsAttDataMapper">
+    
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.mjw.vueback.demos.web.entity.TComponentsAttData">
+        <id column="GUID" property="guid" />
+        <result column="ATT_ID" property="attId" />
+        <result column="FILE_DATA" property="fileData" />
+        <result column="CREATE_USER_ID" property="createUserId" />
+        <result column="CREATE_DATE" property="createDate" />
+    </resultMap>
+    
+    <!-- 根据 GUID 查询 -->
+    <select id="selectByGuid" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_ATT_DATA WHERE GUID = #{guid}
+    </select>
+    
+    <!-- 根据附件ID查询附件数据 -->
+    <select id="selectByAttId" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_ATT_DATA WHERE ATT_ID = #{attId}
+    </select>
+    
+    <!-- 根据条件查询列表 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_ATT_DATA
+        <where>
+            <if test="guid != null and guid != ''">
+                AND GUID = #{guid}
+            </if>
+            <if test="attId != null and attId != ''">
+                AND ATT_ID = #{attId}
+            </if>
+        </where>
+        ORDER BY CREATE_DATE DESC
+    </select>
+    
+    <!-- 插入 -->
+    <insert id="insert" parameterType="com.mjw.vueback.demos.web.entity.TComponentsAttData">
+        INSERT INTO T_COMPONENTS_ATT_DATA (
+            GUID, ATT_ID, FILE_DATA,
+            CREATE_USER_ID, CREATE_DATE
+        ) VALUES (
+            #{guid}, #{attId}, #{fileData},
+            #{createUserId}, #{createDate}
+        )
+    </insert>
+    
+    <!-- 根据 GUID 更新 -->
+    <update id="updateByGuid" parameterType="com.mjw.vueback.demos.web.entity.TComponentsAttData">
+        UPDATE T_COMPONENTS_ATT_DATA
+        <set>
+            <if test="attId != null">ATT_ID = #{attId},</if>
+            <if test="fileData != null">FILE_DATA = #{fileData},</if>
+            <if test="createUserId != null">CREATE_USER_ID = #{createUserId},</if>
+            <if test="createDate != null">CREATE_DATE = #{createDate},</if>
+        </set>
+        WHERE GUID = #{guid}
+    </update>
+    
+    <!-- 根据 GUID 删除 -->
+    <delete id="deleteByGuid">
+        DELETE FROM T_COMPONENTS_ATT_DATA WHERE GUID = #{guid}
+    </delete>
+    
+    <!-- 根据附件ID删除所有附件数据 -->
+    <delete id="deleteByAttId">
+        DELETE FROM T_COMPONENTS_ATT_DATA WHERE ATT_ID = #{attId}
+    </delete>
+    
+    <!-- 插入非空字段 -->
+    <insert id="insertSelective" parameterType="com.mjw.vueback.demos.web.entity.TComponentsAttData">
+        INSERT INTO T_COMPONENTS_ATT_DATA
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="guid != null">GUID,</if>
+            <if test="attId != null">ATT_ID,</if>
+            <if test="fileData != null">FILE_DATA,</if>
+            <if test="createUserId != null">CREATE_USER_ID,</if>
+            <if test="createDate != null">CREATE_DATE,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="guid != null">#{guid},</if>
+            <if test="attId != null">#{attId},</if>
+            <if test="fileData != null">#{fileData},</if>
+            <if test="createUserId != null">#{createUserId},</if>
+            <if test="createDate != null">#{createDate},</if>
+        </trim>
+    </insert>
+    
+    <!-- 根据GUID更新非空字段 -->
+    <update id="updateByGuidSelective" parameterType="com.mjw.vueback.demos.web.entity.TComponentsAttData">
+        UPDATE T_COMPONENTS_ATT_DATA
+        <set>
+            <if test="attId != null">ATT_ID = #{attId},</if>
+            <if test="fileData != null">FILE_DATA = #{fileData},</if>
+            <if test="createUserId != null">CREATE_USER_ID = #{createUserId},</if>
+            <if test="createDate != null">CREATE_DATE = #{createDate},</if>
+        </set>
+        WHERE GUID = #{guid}
+    </update>
+    
+</mapper>

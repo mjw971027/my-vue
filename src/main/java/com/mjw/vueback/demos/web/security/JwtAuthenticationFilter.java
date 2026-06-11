@@ -19,10 +19,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenUtil jwtTokenUtil;
     private final ApplicationContext applicationContext;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public JwtAuthenticationFilter(JwtTokenUtil jwtTokenUtil, ApplicationContext applicationContext) {
+    public JwtAuthenticationFilter(JwtTokenUtil jwtTokenUtil, 
+                                   ApplicationContext applicationContext,
+                                   TokenBlacklistService tokenBlacklistService) {
         this.jwtTokenUtil = jwtTokenUtil;
         this.applicationContext = applicationContext;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -48,7 +52,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (token != null) {
                 logger.info("传入的Token: {}", token);
 
-                if (jwtTokenUtil.validateToken(token)) {
+                // 检查 Token 是否在黑名单中（是否已退出登录）
+                if (tokenBlacklistService.isBlacklisted(token)) {
+                    logger.warn("Token 已在黑名单中（用户已退出登录）");
+                } else if (jwtTokenUtil.validateToken(token)) {
                     String username = jwtTokenUtil.getUsernameFromToken(token);
                     logger.info("Token验证通过，用户名: {}", username);
 

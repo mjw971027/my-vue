@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mjw.vueback.demos.web.mapper.TComponentsLineMapper">
+    
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.mjw.vueback.demos.web.entity.TComponentsLine">
+        <id column="GUID" property="guid" />
+        <result column="COMPONENTS_ID" property="componentsId" />
+        <result column="ACTIVATION" property="activation" />
+        <result column="MATERIAL_NO" property="materialNo" />
+        <result column="MATERIAL_NAME" property="materialName" />
+        <result column="UNIT" property="unit" />
+        <result column="DEMAND_QTY" property="demandQty" />
+        <result column="FINAL_DEMAND_QTY" property="finalDemandQty" />
+        <result column="MATERIAL_COST" property="materialCost" />
+        <result column="MATERIAL_SOURCES" property="materialSources" />
+        <result column="REMARK" property="remark" />
+        <result column="QUALITY" property="quality" />
+        <result column="THK1" property="thk1" />
+        <result column="THK2" property="thk2" />
+        <result column="W1" property="w1" />
+        <result column="W2" property="w2" />
+        <result column="L" property="l" />
+        <result column="CREATE_NODE" property="createNode" />
+        <result column="CREATE_USER_ID" property="createUserId" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="UPDATE_USER_ID" property="updateUserId" />
+        <result column="UPDATE_DATE" property="updateDate" />
+        <result column="BO_ID" property="boId" />
+    </resultMap>
+    
+    <!-- 根据 GUID 查询 -->
+    <select id="selectByGuid" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_LINE WHERE GUID = #{guid}
+    </select>
+    
+    <!-- 根据工装申请ID查询明细列表 -->
+    <select id="selectByComponentsId" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_LINE WHERE COMPONENTS_ID = #{componentsId}
+    </select>
+    
+    <!-- 根据条件查询列表 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_LINE
+        <where>
+            <if test="guid != null and guid != ''">
+                AND GUID = #{guid}
+            </if>
+            <if test="componentsId != null and componentsId != ''">
+                AND COMPONENTS_ID = #{componentsId}
+            </if>
+            <if test="materialNo != null and materialNo != ''">
+                AND MATERIAL_NO = #{materialNo}
+            </if>
+            <if test="materialName != null and materialName != ''">
+                AND MATERIAL_NAME LIKE CONCAT('%', #{materialName}, '%')
+            </if>
+            <if test="createUserId != null and createUserId != ''">
+                AND CREATE_USER_ID = #{createUserId}
+            </if>
+        </where>
+        ORDER BY CREATE_DATE DESC
+    </select>
+    <select id="getNewMactNo" resultType="java.lang.String">
+        SELECT
+            CONCAT(
+                    'MACT',
+                    DATE_FORMAT(NOW(), '%Y%m%d'),
+                    LPAD(IFNULL(MAX(SUBSTRING(MATERIAL_NO, 13)), 0) + 1, 3, '0')
+            ) AS NEW_MATERIAL_NO
+        FROM t_components_line
+        WHERE MATERIAL_NO LIKE CONCAT('MACT', DATE_FORMAT(NOW(), '%Y%m%d'), '%');
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" parameterType="com.mjw.vueback.demos.web.entity.TComponentsLine">
+        INSERT INTO T_COMPONENTS_LINE (
+            GUID, COMPONENTS_ID, ACTIVATION, MATERIAL_NO, MATERIAL_NAME,
+            UNIT, DEMAND_QTY, FINAL_DEMAND_QTY, MATERIAL_COST, MATERIAL_SOURCES,
+            REMARK, QUALITY, THK1, THK2, W1,
+            W2, L, CREATE_NODE, CREATE_USER_ID, CREATE_DATE,
+            UPDATE_USER_ID, UPDATE_DATE, BO_ID
+        ) VALUES (
+            #{guid}, #{componentsId}, #{activation}, #{materialNo}, #{materialName},
+            #{unit}, #{demandQty}, #{finalDemandQty}, #{materialCost}, #{materialSources},
+            #{remark}, #{quality}, #{thk1}, #{thk2}, #{w1},
+            #{w2}, #{l}, #{createNode}, #{createUserId}, #{createDate},
+            #{updateUserId}, #{updateDate}, #{boId}
+        )
+    </insert>
+    
+    <!-- 根据 GUID 更新 -->
+    <update id="updateByGuid" parameterType="com.mjw.vueback.demos.web.entity.TComponentsLine">
+        UPDATE T_COMPONENTS_LINE
+        <set>
+            <if test="componentsId != null">COMPONENTS_ID = #{componentsId},</if>
+            <if test="activation != null">ACTIVATION = #{activation},</if>
+            <if test="materialNo != null">MATERIAL_NO = #{materialNo},</if>
+            <if test="materialName != null">MATERIAL_NAME = #{materialName},</if>
+            <if test="unit != null">UNIT = #{unit},</if>
+            <if test="demandQty != null">DEMAND_QTY = #{demandQty},</if>
+            <if test="finalDemandQty != null">FINAL_DEMAND_QTY = #{finalDemandQty},</if>
+            <if test="materialCost != null">MATERIAL_COST = #{materialCost},</if>
+            <if test="materialSources != null">MATERIAL_SOURCES = #{materialSources},</if>
+            <if test="remark != null">REMARK = #{remark},</if>
+            <if test="quality != null">QUALITY = #{quality},</if>
+            <if test="thk1 != null">THK1 = #{thk1},</if>
+            <if test="thk2 != null">THK2 = #{thk2},</if>
+            <if test="w1 != null">W1 = #{w1},</if>
+            <if test="w2 != null">W2 = #{w2},</if>
+            <if test="l != null">L = #{l},</if>
+            <if test="createNode != null">CREATE_NODE = #{createNode},</if>
+            <if test="updateUserId != null">UPDATE_USER_ID = #{updateUserId},</if>
+            <if test="updateDate != null">UPDATE_DATE = #{updateDate},</if>
+            <if test="boId != null">BO_ID = #{boId},</if>
+        </set>
+        WHERE GUID = #{guid}
+    </update>
+    
+    <!-- 根据 GUID 删除 -->
+    <delete id="deleteByGuid">
+        DELETE FROM T_COMPONENTS_LINE WHERE GUID = #{guid}
+    </delete>
+    
+    <!-- 根据工装申请ID删除所有明细 -->
+    <delete id="deleteByComponentsId">
+        DELETE FROM T_COMPONENTS_LINE WHERE COMPONENTS_ID = #{componentsId}
+    </delete>
+    
+    <!-- 插入非空字段 -->
+    <insert id="insertSelective" parameterType="com.mjw.vueback.demos.web.entity.TComponentsLine">
+        INSERT INTO T_COMPONENTS_LINE
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="guid != null">GUID,</if>
+            <if test="componentsId != null">COMPONENTS_ID,</if>
+            <if test="activation != null">ACTIVATION,</if>
+            <if test="materialNo != null">MATERIAL_NO,</if>
+            <if test="materialName != null">MATERIAL_NAME,</if>
+            <if test="unit != null">UNIT,</if>
+            <if test="demandQty != null">DEMAND_QTY,</if>
+            <if test="finalDemandQty != null">FINAL_DEMAND_QTY,</if>
+            <if test="materialCost != null">MATERIAL_COST,</if>
+            <if test="materialSources != null">MATERIAL_SOURCES,</if>
+            <if test="remark != null">REMARK,</if>
+            <if test="quality != null">QUALITY,</if>
+            <if test="thk1 != null">THK1,</if>
+            <if test="thk2 != null">THK2,</if>
+            <if test="w1 != null">W1,</if>
+            <if test="w2 != null">W2,</if>
+            <if test="l != null">L,</if>
+            <if test="createNode != null">CREATE_NODE,</if>
+            <if test="createUserId != null">CREATE_USER_ID,</if>
+            <if test="createDate != null">CREATE_DATE,</if>
+            <if test="updateUserId != null">UPDATE_USER_ID,</if>
+            <if test="updateDate != null">UPDATE_DATE,</if>
+            <if test="boId != null">BO_ID,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="guid != null">#{guid},</if>
+            <if test="componentsId != null">#{componentsId},</if>
+            <if test="activation != null">#{activation},</if>
+            <if test="materialNo != null">#{materialNo},</if>
+            <if test="materialName != null">#{materialName},</if>
+            <if test="unit != null">#{unit},</if>
+            <if test="demandQty != null">#{demandQty},</if>
+            <if test="finalDemandQty != null">#{finalDemandQty},</if>
+            <if test="materialCost != null">#{materialCost},</if>
+            <if test="materialSources != null">#{materialSources},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="quality != null">#{quality},</if>
+            <if test="thk1 != null">#{thk1},</if>
+            <if test="thk2 != null">#{thk2},</if>
+            <if test="w1 != null">#{w1},</if>
+            <if test="w2 != null">#{w2},</if>
+            <if test="l != null">#{l},</if>
+            <if test="createNode != null">#{createNode},</if>
+            <if test="createUserId != null">#{createUserId},</if>
+            <if test="createDate != null">#{createDate},</if>
+            <if test="updateUserId != null">#{updateUserId},</if>
+            <if test="updateDate != null">#{updateDate},</if>
+            <if test="boId != null">#{boId},</if>
+        </trim>
+    </insert>
+    
+    <!-- 根据GUID更新非空字段 -->
+    <update id="updateByGuidSelective" parameterType="com.mjw.vueback.demos.web.entity.TComponentsLine">
+        UPDATE T_COMPONENTS_LINE
+        <set>
+            <if test="componentsId != null">COMPONENTS_ID = #{componentsId},</if>
+            <if test="activation != null">ACTIVATION = #{activation},</if>
+            <if test="materialNo != null">MATERIAL_NO = #{materialNo},</if>
+            <if test="materialName != null">MATERIAL_NAME = #{materialName},</if>
+            <if test="unit != null">UNIT = #{unit},</if>
+            <if test="demandQty != null">DEMAND_QTY = #{demandQty},</if>
+            <if test="finalDemandQty != null">FINAL_DEMAND_QTY = #{finalDemandQty},</if>
+            <if test="materialCost != null">MATERIAL_COST = #{materialCost},</if>
+            <if test="materialSources != null">MATERIAL_SOURCES = #{materialSources},</if>
+            <if test="remark != null">REMARK = #{remark},</if>
+            <if test="quality != null">QUALITY = #{quality},</if>
+            <if test="thk1 != null">THK1 = #{thk1},</if>
+            <if test="thk2 != null">THK2 = #{thk2},</if>
+            <if test="w1 != null">W1 = #{w1},</if>
+            <if test="w2 != null">W2 = #{w2},</if>
+            <if test="l != null">L = #{l},</if>
+            <if test="createNode != null">CREATE_NODE = #{createNode},</if>
+            <if test="updateUserId != null">UPDATE_USER_ID = #{updateUserId},</if>
+            <if test="updateDate != null">UPDATE_DATE = #{updateDate},</if>
+            <if test="boId != null">BO_ID = #{boId},</if>
+        </set>
+        WHERE GUID = #{guid}
+    </update>
+    
+</mapper>

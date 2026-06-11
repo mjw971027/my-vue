@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mjw.vueback.demos.web.mapper.TComponentsMapper">
+    
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.mjw.vueback.demos.web.entity.TComponents">
+        <id column="GUID" property="guid" />
+        <result column="BILL_NO" property="billNo" />
+        <result column="COMPANY_NO" property="companyNo" />
+        <result column="DEPT_NO" property="deptNo" />
+        <result column="COMPONENTS_NAME" property="componentsName" />
+        <result column="PROJ_NO" property="projNo" />
+        <result column="DIV_CD" property="divCd" />
+        <result column="NUMBER_NO" property="numberNo" />
+        <result column="FINAL_NUMBER_NO" property="finalNumberNo" />
+        <result column="APPOINT_DUTY_DEPT_YN" property="appointDutyDeptYn" />
+        <result column="DWGNO" property="dwgno" />
+        <result column="MATERIAL_TOTAL_COST" property="materialTotalCost" />
+        <result column="MH_BDGT" property="mhBdgt" />
+        <result column="CREATE_USER_ID" property="createUserId" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="NEED_DATE" property="needDate" />
+        <result column="UPDATE_USER_ID" property="updateUserId" />
+        <result column="UPDATE_DATE" property="updateDate" />
+        <result column="REMARK" property="remark" />
+        <result column="MA_PROCESS_ID" property="maProcessId" />
+        <result column="MA_STATUS" property="maStatus" />
+        <result column="TEL" property="tel" />
+        <result column="APP_DATE" property="appDate" />
+        <result column="DESIGN_STATUS" property="designStatus" />
+        <result column="BO_ID" property="boId" />
+    </resultMap>
+    
+    <!-- 结果映射（包含部门描述） -->
+    <resultMap id="BaseResultMapWithDept" type="com.mjw.vueback.demos.web.entity.TComponents">
+        <id column="GUID" property="guid" />
+        <result column="BILL_NO" property="billNo" />
+        <result column="COMPANY_NO" property="companyNo" />
+        <result column="DEPT_NO" property="deptNo" />
+        <result column="DEPT_NAME" property="deptName" />
+        <result column="COMPONENTS_NAME" property="componentsName" />
+        <result column="PROJ_NO" property="projNo" />
+        <result column="DIV_CD" property="divCd" />
+        <result column="NUMBER_NO" property="numberNo" />
+        <result column="FINAL_NUMBER_NO" property="finalNumberNo" />
+        <result column="APPOINT_DUTY_DEPT_YN" property="appointDutyDeptYn" />
+        <result column="DWGNO" property="dwgno" />
+        <result column="MATERIAL_TOTAL_COST" property="materialTotalCost" />
+        <result column="MH_BDGT" property="mhBdgt" />
+        <result column="CREATE_USER_ID" property="createUserId" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="NEED_DATE" property="needDate" />
+        <result column="UPDATE_USER_ID" property="updateUserId" />
+        <result column="UPDATE_DATE" property="updateDate" />
+        <result column="REMARK" property="remark" />
+        <result column="MA_PROCESS_ID" property="maProcessId" />
+        <result column="MA_STATUS" property="maStatus" />
+        <result column="TEL" property="tel" />
+        <result column="APP_DATE" property="appDate" />
+        <result column="DESIGN_STATUS" property="designStatus" />
+        <result column="BO_ID" property="boId" />
+    </resultMap>
+    
+    <!-- 根据 GUID 查询 -->
+    <select id="selectByGuid" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS WHERE GUID = #{guid}
+    </select>
+    
+    <!-- 根据申请单号查询 -->
+    <select id="selectByBillNo" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS WHERE BILL_NO = #{billNo}
+    </select>
+    
+    <!-- 根据条件查询列表（包含部门描述） -->
+    <select id="selectList" resultMap="BaseResultMapWithDept">
+        SELECT 
+            tc.*,
+            d.ORGN_DESC AS DEPT_NAME
+        FROM T_COMPONENTS tc
+        LEFT JOIN T_DEPT d ON tc.DEPT_NO = d.ORGN_CD AND d.ORGN_TYPE = '02'
+        <where>
+            <if test="guid != null and guid != ''">
+                AND tc.GUID = #{guid}
+            </if>
+
+            <if test="companyNo != null and companyNo != ''">
+                AND tc.COMPANY_NO = #{companyNo}
+            </if>
+            <if test="deptNo != null and deptNo != ''">
+                AND tc.DEPT_NO = #{deptNo}
+            </if>
+            <if test="componentsName != null and componentsName != ''">
+                AND (tc.COMPONENTS_NAME LIKE CONCAT('%', #{componentsName}, '%') 
+                     OR tc.BILL_NO LIKE CONCAT('%', #{componentsName}, '%'))
+            </if>
+            <if test="maStatus != null and maStatus != ''">
+                AND tc.MA_STATUS = #{maStatus}
+            </if>
+            <if test="createUserId != null and createUserId != ''">
+                AND tc.CREATE_USER_ID = #{createUserId}
+            </if>
+            <if test="createDateStart != null">
+                AND tc.CREATE_DATE >= #{createDateStart}
+            </if>
+            <if test="createDateEnd != null">
+                AND tc.CREATE_DATE &lt;= #{createDateEnd}
+            </if>
+        </where>
+        ORDER BY tc.CREATE_DATE DESC
+    </select>
+    
+    <!-- 插入 -->
+    <insert id="insert" parameterType="com.mjw.vueback.demos.web.entity.TComponents">
+        INSERT INTO T_COMPONENTS (
+            GUID, BILL_NO, COMPANY_NO, DEPT_NO, COMPONENTS_NAME,
+            PROJ_NO, DIV_CD, NUMBER_NO, FINAL_NUMBER_NO, APPOINT_DUTY_DEPT_YN,
+            DWGNO, MATERIAL_TOTAL_COST, MH_BDGT, CREATE_USER_ID, CREATE_DATE,
+            NEED_DATE, UPDATE_USER_ID, UPDATE_DATE, REMARK, MA_PROCESS_ID,
+            MA_STATUS, TEL, APP_DATE, DESIGN_STATUS, BO_ID
+        ) VALUES (
+            #{guid}, #{billNo}, #{companyNo}, #{deptNo}, #{componentsName},
+            #{projNo}, #{divCd}, #{numberNo}, #{finalNumberNo}, #{appointDutyDeptYn},
+            #{dwgno}, #{materialTotalCost}, #{mhBdgt}, #{createUserId}, #{createDate},
+            #{needDate}, #{updateUserId}, #{updateDate}, #{remark}, #{maProcessId},
+            #{maStatus}, #{tel}, #{appDate}, #{designStatus}, #{boId}
+        )
+    </insert>
+    
+    <!-- 根据 GUID 更新 -->
+    <update id="updateByGuid" parameterType="com.mjw.vueback.demos.web.entity.TComponents">
+        UPDATE T_COMPONENTS
+        <set>
+            <if test="billNo != null">BILL_NO = #{billNo},</if>
+            <if test="companyNo != null">COMPANY_NO = #{companyNo},</if>
+            <if test="deptNo != null">DEPT_NO = #{deptNo},</if>
+            <if test="componentsName != null">COMPONENTS_NAME = #{componentsName},</if>
+            <if test="projNo != null">PROJ_NO = #{projNo},</if>
+            <if test="divCd != null">DIV_CD = #{divCd},</if>
+            <if test="numberNo != null">NUMBER_NO = #{numberNo},</if>
+            <if test="finalNumberNo != null">FINAL_NUMBER_NO = #{finalNumberNo},</if>
+            <if test="appointDutyDeptYn != null">APPOINT_DUTY_DEPT_YN = #{appointDutyDeptYn},</if>
+            <if test="dwgno != null">DWGNO = #{dwgno},</if>
+            <if test="materialTotalCost != null">MATERIAL_TOTAL_COST = #{materialTotalCost},</if>
+            <if test="mhBdgt != null">MH_BDGT = #{mhBdgt},</if>
+            <if test="needDate != null">NEED_DATE = #{needDate},</if>
+            <if test="remark != null">REMARK = #{remark},</if>
+            <if test="maProcessId != null">MA_PROCESS_ID = #{maProcessId},</if>
+            <if test="maStatus != null">MA_STATUS = #{maStatus},</if>
+            <if test="tel != null">TEL = #{tel},</if>
+            <if test="appDate != null">APP_DATE = #{appDate},</if>
+            <if test="designStatus != null">DESIGN_STATUS = #{designStatus},</if>
+            <if test="boId != null">BO_ID = #{boId},</if>
+            <if test="updateUserId != null">UPDATE_USER_ID = #{updateUserId},</if>
+            <if test="updateDate != null">UPDATE_DATE = #{updateDate},</if>
+        </set>
+        WHERE GUID = #{guid}
+    </update>
+    
+    <!-- 根据 GUID 删除 -->
+    <delete id="deleteByGuid">
+        DELETE FROM T_COMPONENTS WHERE GUID = #{guid}
+    </delete>
+    
+    <!-- 根据申请单号删除 -->
+    <delete id="deleteByBillNo">
+        DELETE FROM T_COMPONENTS WHERE BILL_NO = #{billNo}
+    </delete>
+    
+    <!-- 插入非空字段 -->
+    <insert id="insertSelective" parameterType="com.mjw.vueback.demos.web.entity.TComponents">
+        INSERT INTO T_COMPONENTS
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="guid != null">GUID,</if>
+            <if test="billNo != null">BILL_NO,</if>
+            <if test="companyNo != null">COMPANY_NO,</if>
+            <if test="deptNo != null">DEPT_NO,</if>
+            <if test="componentsName != null">COMPONENTS_NAME,</if>
+            <if test="projNo != null">PROJ_NO,</if>
+            <if test="divCd != null">DIV_CD,</if>
+            <if test="numberNo != null">NUMBER_NO,</if>
+            <if test="finalNumberNo != null">FINAL_NUMBER_NO,</if>
+            <if test="appointDutyDeptYn != null">APPOINT_DUTY_DEPT_YN,</if>
+            <if test="dwgno != null">DWGNO,</if>
+            <if test="materialTotalCost != null">MATERIAL_TOTAL_COST,</if>
+            <if test="mhBdgt != null">MH_BDGT,</if>
+            <if test="createUserId != null">CREATE_USER_ID,</if>
+            <if test="createDate != null">CREATE_DATE,</if>
+            <if test="needDate != null">NEED_DATE,</if>
+            <if test="updateUserId != null">UPDATE_USER_ID,</if>
+            <if test="updateDate != null">UPDATE_DATE,</if>
+            <if test="remark != null">REMARK,</if>
+            <if test="maProcessId != null">MA_PROCESS_ID,</if>
+            <if test="maStatus != null">MA_STATUS,</if>
+            <if test="tel != null">TEL,</if>
+            <if test="appDate != null">APP_DATE,</if>
+            <if test="designStatus != null">DESIGN_STATUS,</if>
+            <if test="boId != null">BO_ID,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="guid != null">#{guid},</if>
+            <if test="billNo != null">#{billNo},</if>
+            <if test="companyNo != null">#{companyNo},</if>
+            <if test="deptNo != null">#{deptNo},</if>
+            <if test="componentsName != null">#{componentsName},</if>
+            <if test="projNo != null">#{projNo},</if>
+            <if test="divCd != null">#{divCd},</if>
+            <if test="numberNo != null">#{numberNo},</if>
+            <if test="finalNumberNo != null">#{finalNumberNo},</if>
+            <if test="appointDutyDeptYn != null">#{appointDutyDeptYn},</if>
+            <if test="dwgno != null">#{dwgno},</if>
+            <if test="materialTotalCost != null">#{materialTotalCost},</if>
+            <if test="mhBdgt != null">#{mhBdgt},</if>
+            <if test="createUserId != null">#{createUserId},</if>
+            <if test="createDate != null">#{createDate},</if>
+            <if test="needDate != null">#{needDate},</if>
+            <if test="updateUserId != null">#{updateUserId},</if>
+            <if test="updateDate != null">#{updateDate},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="maProcessId != null">#{maProcessId},</if>
+            <if test="maStatus != null">#{maStatus},</if>
+            <if test="tel != null">#{tel},</if>
+            <if test="appDate != null">#{appDate},</if>
+            <if test="designStatus != null">#{designStatus},</if>
+            <if test="boId != null">#{boId},</if>
+        </trim>
+    </insert>
+    
+    <!-- 根据GUID更新非空字段 -->
+    <update id="updateByGuidSelective" parameterType="com.mjw.vueback.demos.web.entity.TComponents">
+        UPDATE T_COMPONENTS
+        <set>
+            <if test="billNo != null">BILL_NO = #{billNo},</if>
+            <if test="companyNo != null">COMPANY_NO = #{companyNo},</if>
+            <if test="deptNo != null">DEPT_NO = #{deptNo},</if>
+            <if test="componentsName != null">COMPONENTS_NAME = #{componentsName},</if>
+            <if test="projNo != null">PROJ_NO = #{projNo},</if>
+            <if test="divCd != null">DIV_CD = #{divCd},</if>
+            <if test="numberNo != null">NUMBER_NO = #{numberNo},</if>
+            <if test="finalNumberNo != null">FINAL_NUMBER_NO = #{finalNumberNo},</if>
+            <if test="appointDutyDeptYn != null">APPOINT_DUTY_DEPT_YN = #{appointDutyDeptYn},</if>
+            <if test="dwgno != null">DWGNO = #{dwgno},</if>
+            <if test="materialTotalCost != null">MATERIAL_TOTAL_COST = #{materialTotalCost},</if>
+            <if test="mhBdgt != null">MH_BDGT = #{mhBdgt},</if>
+            <if test="needDate != null">NEED_DATE = #{needDate},</if>
+            <if test="remark != null">REMARK = #{remark},</if>
+            <if test="maProcessId != null">MA_PROCESS_ID = #{maProcessId},</if>
+            <if test="maStatus != null">MA_STATUS = #{maStatus},</if>
+            <if test="tel != null">TEL = #{tel},</if>
+            <if test="appDate != null">APP_DATE = #{appDate},</if>
+            <if test="designStatus != null">DESIGN_STATUS = #{designStatus},</if>
+            <if test="boId != null">BO_ID = #{boId},</if>
+            <if test="updateUserId != null">UPDATE_USER_ID = #{updateUserId},</if>
+            <if test="updateDate != null">UPDATE_DATE = #{updateDate},</if>
+        </set>
+        WHERE GUID = #{guid}
+    </update>
+    
+    <!-- 根据billNo前缀查询当天最大的billNo -->
+    <select id="selectMaxBillNoByPrefix" resultType="String">
+        SELECT MAX(BILL_NO) FROM T_COMPONENTS
+        WHERE BILL_NO LIKE CONCAT(#{billNoPrefix}, '%')
+    </select>
+
+</mapper>

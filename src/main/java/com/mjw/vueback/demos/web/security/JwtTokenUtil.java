@@ -72,6 +72,23 @@ public class JwtTokenUtil {
         }
     }
 
+    // 获取Token的剩余过期时间（秒）
+    public long getExpirationFromToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            Date expiration = claims.getExpiration();
+            Date now = new Date();
+            long diff = expiration.getTime() - now.getTime();
+            return diff > 0 ? diff / 1000 : 0; // 返回秒数
+        } catch (JwtException | IllegalArgumentException e) {
+            return 0;
+        }
+    }
+
     // 从Token中获取认证信息
     public Authentication getAuthentication(String token) {
         Claims claims = Jwts.parserBuilder()

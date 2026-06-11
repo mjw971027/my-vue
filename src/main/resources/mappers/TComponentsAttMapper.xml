@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mjw.vueback.demos.web.mapper.TComponentsAttMapper">
+    
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.mjw.vueback.demos.web.entity.TComponentsAtt">
+        <id column="GUID" property="guid" />
+        <result column="COMPONENTS_ID" property="componentsId" />
+        <result column="FILE_NAME" property="fileName" />
+        <result column="FILE_PATH" property="filePath" />
+        <result column="FILE_SIZE" property="fileSize" />
+        <result column="FILE_TYPE" property="fileType" />
+        <result column="CREATE_USER_ID" property="createUserId" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="UPDATE_USER_ID" property="updateUserId" />
+        <result column="UPDATE_DATE" property="updateDate" />
+        <result column="REMARK" property="remark" />
+    </resultMap>
+    
+    <!-- 根据 GUID 查询 -->
+    <select id="selectByGuid" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_ATT WHERE GUID = #{guid}
+    </select>
+    
+    <!-- 根据工装申请ID查询附件列表 -->
+    <select id="selectByComponentsId" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_ATT WHERE COMPONENTS_ID = #{componentsId}
+    </select>
+    
+    <!-- 根据条件查询列表 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT * FROM T_COMPONENTS_ATT
+        <where>
+            <if test="guid != null and guid != ''">
+                AND GUID = #{guid}
+            </if>
+            <if test="componentsId != null and componentsId != ''">
+                AND COMPONENTS_ID = #{componentsId}
+            </if>
+            <if test="fileName != null and fileName != ''">
+                AND FILE_NAME LIKE CONCAT('%', #{fileName}, '%')
+            </if>
+            <if test="fileType != null and fileType != ''">
+                AND FILE_TYPE = #{fileType}
+            </if>
+        </where>
+        ORDER BY CREATE_DATE DESC
+    </select>
+    
+    <!-- 插入 -->
+    <insert id="insert" parameterType="com.mjw.vueback.demos.web.entity.TComponentsAtt">
+        INSERT INTO T_COMPONENTS_ATT (
+            GUID, COMPONENTS_ID, FILE_NAME, FILE_PATH,
+            FILE_SIZE, FILE_TYPE, CREATE_USER_ID, CREATE_DATE,
+            UPDATE_USER_ID, UPDATE_DATE, REMARK
+        ) VALUES (
+            #{guid}, #{componentsId}, #{fileName}, #{filePath},
+            #{fileSize}, #{fileType}, #{createUserId}, #{createDate},
+            #{updateUserId}, #{updateDate}, #{remark}
+        )
+    </insert>
+    
+    <!-- 根据 GUID 更新 -->
+    <update id="updateByGuid" parameterType="com.mjw.vueback.demos.web.entity.TComponentsAtt">
+        UPDATE T_COMPONENTS_ATT
+        <set>
+            <if test="componentsId != null">COMPONENTS_ID = #{componentsId},</if>
+            <if test="fileName != null">FILE_NAME = #{fileName},</if>
+            <if test="filePath != null">FILE_PATH = #{filePath},</if>
+            <if test="fileSize != null">FILE_SIZE = #{fileSize},</if>
+            <if test="fileType != null">FILE_TYPE = #{fileType},</if>
+            <if test="remark != null">REMARK = #{remark},</if>
+            <if test="updateUserId != null">UPDATE_USER_ID = #{updateUserId},</if>
+            <if test="updateDate != null">UPDATE_DATE = #{updateDate},</if>
+        </set>
+        WHERE GUID = #{guid}
+    </update>
+    
+    <!-- 根据 GUID 删除 -->
+    <delete id="deleteByGuid">
+        DELETE FROM T_COMPONENTS_ATT WHERE GUID = #{guid}
+    </delete>
+    
+    <!-- 根据工装申请ID删除所有附件 -->
+    <delete id="deleteByComponentsId">
+        DELETE FROM T_COMPONENTS_ATT WHERE COMPONENTS_ID = #{componentsId}
+    </delete>
+    
+    <!-- 插入非空字段 -->
+    <insert id="insertSelective" parameterType="com.mjw.vueback.demos.web.entity.TComponentsAtt">
+        INSERT INTO T_COMPONENTS_ATT
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="guid != null">GUID,</if>
+            <if test="componentsId != null">COMPONENTS_ID,</if>
+            <if test="fileName != null">FILE_NAME,</if>
+            <if test="filePath != null">FILE_PATH,</if>
+            <if test="fileSize != null">FILE_SIZE,</if>
+            <if test="fileType != null">FILE_TYPE,</if>
+            <if test="createUserId != null">CREATE_USER_ID,</if>
+            <if test="createDate != null">CREATE_DATE,</if>
+            <if test="updateUserId != null">UPDATE_USER_ID,</if>
+            <if test="updateDate != null">UPDATE_DATE,</if>
+            <if test="remark != null">REMARK,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="guid != null">#{guid},</if>
+            <if test="componentsId != null">#{componentsId},</if>
+            <if test="fileName != null">#{fileName},</if>
+            <if test="filePath != null">#{filePath},</if>
+            <if test="fileSize != null">#{fileSize},</if>
+            <if test="fileType != null">#{fileType},</if>
+            <if test="createUserId != null">#{createUserId},</if>
+            <if test="createDate != null">#{createDate},</if>
+            <if test="updateUserId != null">#{updateUserId},</if>
+            <if test="updateDate != null">#{updateDate},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+    
+    <!-- 根据GUID更新非空字段 -->
+    <update id="updateByGuidSelective" parameterType="com.mjw.vueback.demos.web.entity.TComponentsAtt">
+        UPDATE T_COMPONENTS_ATT
+        <set>
+            <if test="componentsId != null">COMPONENTS_ID = #{componentsId},</if>
+            <if test="fileName != null">FILE_NAME = #{fileName},</if>
+            <if test="filePath != null">FILE_PATH = #{filePath},</if>
+            <if test="fileSize != null">FILE_SIZE = #{fileSize},</if>
+            <if test="fileType != null">FILE_TYPE = #{fileType},</if>
+            <if test="remark != null">REMARK = #{remark},</if>
+            <if test="updateUserId != null">UPDATE_USER_ID = #{updateUserId},</if>
+            <if test="updateDate != null">UPDATE_DATE = #{updateDate},</if>
+        </set>
+        WHERE GUID = #{guid}
+    </update>
+    
+</mapper>

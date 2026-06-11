@@ -25,12 +25,31 @@ public class ApiResponse<T> {
         return success(null);
     }
 
-    // 失败
+    // 成功（自定义消息，带数据）
+    public static <T> ApiResponse<T> success(String message, T data) {
+        ApiResponse<T> res = new ApiResponse<>();
+        res.code = 200;
+        res.message = message;
+        res.data = data;
+        return res;
+    }
+
+    // 成功（自定义消息，无数据）
+    public static <T> ApiResponse<T> success(String message) {
+        return success(message, null);
+    }
+
+    // 失败（带状态码）
     public static <T> ApiResponse<T> error(int code, String message) {
         ApiResponse<T> res = new ApiResponse<>();
         res.code = code;
         res.message = message;
         return res;
+    }
+
+    // 失败（默认状态码 500）
+    public static <T> ApiResponse<T> error(String message) {
+        return error(500, message);
     }
 
     // getter/setter

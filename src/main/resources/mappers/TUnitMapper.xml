@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mjw.vueback.demos.web.mapper.TUnitMapper">
+    
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.mjw.vueback.demos.web.entity.TUnit">
+        <id column="GUID" property="GUID" />
+        <result column="UNT_DESC" property="UNT_DESC" />
+        <result column="UNT_TYPE" property="UNT_TYPE" />
+        <result column="ACTIVATION" property="ACTIVATION" />
+    </resultMap>
+    
+    <!-- 查询所有有效单位 -->
+    <select id="selectAllValid" resultMap="BaseResultMap">
+        SELECT * FROM T_UNIT 
+        WHERE ACTIVATION = 'Y'
+        ORDER BY UNT_DESC
+    </select>
+    
+    <!-- 根据GUID查询 -->
+    <select id="selectByGuid" resultMap="BaseResultMap">
+        SELECT * FROM T_UNIT WHERE GUID = #{guid}
+    </select>
+    
+</mapper>
