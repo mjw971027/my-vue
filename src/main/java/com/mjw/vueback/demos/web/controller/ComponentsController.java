@@ -489,11 +489,19 @@ public class ComponentsController {
 
     /**
      * 打印PDF
-     * 对应前端：window.open(`/api/components/printPdf?billNo=${currentRow.value.billNo}`)
+     * 对应前端：window.open(`/api/components/printPdf?billNo=${currentRow.value.billNo}&token=${token}`)
      */
     @GetMapping("/printPdf")
-    public void printPdf(@RequestParam("billNo") String billNo, HttpServletResponse response) {
+    public void printPdf(@RequestParam("billNo") String billNo,
+                         @RequestParam("token") String token,
+                         HttpServletResponse response) {
         try {
+            // 验证 token（因为 window.open 无法携带请求头）
+            if (token == null || !jwtTokenUtil.validateToken(token)) {
+                response.setContentType("text/plain;charset=UTF-8");
+                response.getWriter().write("token 无效或已过期");
+                return;
+            }
             componentsService.generatePdf(billNo, response);
         } catch (Exception e) {
             e.printStackTrace();

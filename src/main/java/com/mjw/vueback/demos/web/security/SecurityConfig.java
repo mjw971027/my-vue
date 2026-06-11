@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .antMatchers("/error").permitAll()  // 放行错误页面
                 .antMatchers("/api/auth/**").permitAll()  // 放行认证接口（登录、注册等）
                 .antMatchers("/api/components/fileDownload").permitAll()  // 放行文件下载（window.open 无法携带请求头）
+                .antMatchers("/api/components/printPdf").permitAll()  // 放行PDF打印（window.open 无法携带请求头）
 //                .antMatchers("/components/**").permitAll()  // 放行工装申请接口
 //                .antMatchers("/api/settings/**").permitAll()
 //                .antMatchers("/api/stats/**").permitAll()

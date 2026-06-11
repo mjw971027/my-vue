@@ -8,18 +8,23 @@ import com.mjw.vueback.demos.web.entity.TComponentsAtt;
 import com.mjw.vueback.demos.web.entity.TComponentsLine;
 import com.mjw.vueback.demos.web.entity.TComponentsOpinion;
 import com.mjw.vueback.demos.web.entity.TComponentsQuote;
+import com.mjw.vueback.demos.web.entity.TUnit;
 import com.mjw.vueback.demos.web.mapper.TComponentsAttMapper;
 import com.mjw.vueback.demos.web.mapper.TComponentsLineMapper;
 import com.mjw.vueback.demos.web.mapper.TComponentsMapper;
 import com.mjw.vueback.demos.web.mapper.TComponentsOpinionMapper;
 import com.mjw.vueback.demos.web.mapper.TComponentsQuoteMapper;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType0Font;
-import org.apache.pdfbox.pdmodel.font.PDTrueTypeFont;
-import org.apache.pdfbox.pdmodel.font.encoding.WinAnsiEncoding;
+import com.mjw.vueback.demos.web.mapper.TUnitMapper;
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -58,6 +63,9 @@ public class ComponentsService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private TUnitMapper tUnitMapper;
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
     
@@ -692,10 +700,9 @@ public class ComponentsService {
     }
 
     /**
-     * 生成并输出工装申请 PDF
+     * 生成并输出工装申请 PDF（iText 表格样式）
      */
     public void generatePdf(String billNo, HttpServletResponse response) {
-        PDDocument document = new PDDocument();
         try {
             // 获取申请单信息
             TComponents tc = tComponentsMapper.selectByBillNo(billNo);
@@ -705,13 +712,8 @@ public class ComponentsService {
                 return;
             }
 
-            PDPage page = new PDPage(PDRectangle.A4);
-            document.addPage(page);
-
-            PDPageContentStream cs = new PDPageContentStream(document, page);
-
-            // 尝试加载中文字体
-            PDTrueTypeFont chineseFont = null;
+            // 加载中文字体
+            BaseFont bfChinese = null;
             String[] fontPaths = {
                     "C:/Windows/Fonts/msyh.ttf",
                     "C:/Windows/Fonts/simhei.ttf",
@@ -723,120 +725,136 @@ public class ComponentsService {
                 File f = new File(fp);
                 if (f.exists()) {
                     try {
-                        chineseFont = PDTrueTypeFont.load(document, f, WinAnsiEncoding.INSTANCE);
+                        bfChinese = BaseFont.createFont(fp, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
                         break;
                     } catch (Exception ignored) {
                     }
                 }
             }
+            boolean hasChinese = bfChinese != null;
+            Font titleFont = hasChinese ? new Font(bfChinese, 18, Font.BOLD) : new Font(Font.FontFamily.HELVETICA, 16, Font.BOLD);
+            Font headerFont = hasChinese ? new Font(bfChinese, 11, Font.BOLD) : new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
+            Font normalFont = hasChinese ? new Font(bfChinese, 10) : new Font(Font.FontFamily.HELVETICA, 9);
+            Font tableHeaderFont = hasChinese ? new Font(bfChinese, 9, Font.BOLD) : new Font(Font.FontFamily.HELVETICA, 8, Font.BOLD);
+            Font tableFont = hasChinese ? new Font(bfChinese, 9) : new Font(Font.FontFamily.HELVETICA, 8);
 
-            boolean hasChineseFont = chineseFont != null;
+            // 先设置响应头，再写入内容
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=\"components_" + billNo + ".pdf\"");
 
-            // 页眉标题
-            float margin = 50;
-            float yStart = page.getMediaBox().getHeight() - margin;
-            float yPos = yStart;
+            Document document = new Document(PageSize.A4, 50, 50, 50, 50);
+            PdfWriter.getInstance(document, response.getOutputStream());
+            document.open();
 
-            // 标题
-            if (hasChineseFont) {
-                cs.setFont(chineseFont, 18);
-            } else {
-                cs.setFont(PDType0Font.load(document, getClass().getResourceAsStream("/org/apache/pdfbox/resources/ttf/Helvetica.ttf")), 16);
-            }
-            cs.beginText();
-            cs.newLineAtOffset(margin, yPos);
-            String titleText = "Workwear Application Form";
-            if (hasChineseFont) {
-                titleText = "工装申请单";
-            }
-            cs.showText(titleText);
-            cs.endText();
-            yPos -= 30;
+            // ========== 标题 ==========
+            com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph(hasChinese ? "工装申请单" : "Workwear Application Form", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(20);
+            document.add(title);
 
-            // 基本信息
-            if (hasChineseFont) {
-                cs.setFont(chineseFont, 11);
-            } else {
-                cs.setFont(PDType0Font.load(document, getClass().getResourceAsStream("/org/apache/pdfbox/resources/ttf/Helvetica.ttf")), 10);
-            }
+            // ========== 基本信息表格（2列） ==========
+            PdfPTable infoTable = new PdfPTable(2);
+            infoTable.setWidthPercentage(100);
+            infoTable.setSpacingAfter(20);
+            infoTable.setWidths(new float[]{25, 75});
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String[][] fields = {
-                    {"申请单号:", tc.getBillNo() != null ? tc.getBillNo() : ""},
-                    {"项目名称:", tc.getComponentsName() != null ? tc.getComponentsName() : ""},
-                    {"工程号:", tc.getProjNo() != null ? tc.getProjNo() : ""},
-                    {"申请日期:", tc.getCreateDate() != null ? sdf.format(tc.getCreateDate()) : ""},
-                    {"需求日期:", tc.getNeedDate() != null ? sdf.format(tc.getNeedDate()) : ""},
-                    {"需求量:", tc.getNumberNo() != null ? tc.getNumberNo().toString() : "0"},
-                    {"状态:", MockDataService.getStatusDesc(tc.getMaStatus())},
-                    {"备注:", tc.getRemark() != null ? tc.getRemark() : ""}
+                    {hasChinese ? "申请单号" : "Bill No", tc.getBillNo() != null ? tc.getBillNo() : ""},
+                    {hasChinese ? "项目名称" : "Project Name", tc.getComponentsName() != null ? tc.getComponentsName() : ""},
+                    {hasChinese ? "工程号" : "Project No", tc.getProjNo() != null ? tc.getProjNo() : ""},
+                    {hasChinese ? "申请日期" : "Apply Date", tc.getCreateDate() != null ? sdf.format(tc.getCreateDate()) : ""},
+                    {hasChinese ? "需求日期" : "Need Date", tc.getNeedDate() != null ? sdf.format(tc.getNeedDate()) : ""},
+                    {hasChinese ? "需求量" : "Quantity", tc.getNumberNo() != null ? tc.getNumberNo().toString() : "0"},
+                    {hasChinese ? "状态" : "Status", MockDataService.getStatusDesc(tc.getMaStatus())},
+                    {hasChinese ? "备注" : "Remark", tc.getRemark() != null ? tc.getRemark() : ""}
             };
 
             for (String[] field : fields) {
-                cs.beginText();
-                cs.newLineAtOffset(margin, yPos);
-                cs.showText(field[0] + " " + field[1]);
-                cs.endText();
-                yPos -= 22;
-            }
+                PdfPCell labelCell = new PdfPCell(new Phrase(field[0], headerFont));
+                labelCell.setBorderColor(BaseColor.LIGHT_GRAY);
+                labelCell.setBackgroundColor(new BaseColor(240, 240, 240));
+                labelCell.setPadding(5);
+                labelCell.setFixedHeight(22);
 
-            // 申请材料列表标题
-            yPos -= 10;
-            String matTitle = "申请材料:";
-            if (!hasChineseFont) {
-                matTitle = "Materials:";
-            }
-            cs.beginText();
-            cs.newLineAtOffset(margin, yPos);
-            cs.showText(matTitle);
-            cs.endText();
-            yPos -= 20;
+                PdfPCell valueCell = new PdfPCell(new Phrase(field[1], normalFont));
+                valueCell.setBorderColor(BaseColor.LIGHT_GRAY);
+                valueCell.setPadding(5);
+                valueCell.setFixedHeight(22);
 
-            // 获取申请材料
+                infoTable.addCell(labelCell);
+                infoTable.addCell(valueCell);
+            }
+            document.add(infoTable);
+
+            // ========== 申请材料表格 ==========
+            com.itextpdf.text.Paragraph matTitle = new com.itextpdf.text.Paragraph(hasChinese ? "申请材料" : "Materials", headerFont);
+            matTitle.setSpacingAfter(8);
+            document.add(matTitle);
+
             List<TComponentsLine> lines = tComponentsLineMapper.selectByComponentsId(tc.getGuid());
-            if (hasChineseFont) {
-                cs.setFont(chineseFont, 9);
-            } else {
-                cs.setFont(PDType0Font.load(document, getClass().getResourceAsStream("/org/apache/pdfbox/resources/ttf/Helvetica.ttf")), 8);
+            Map<String, String> unitCache = new HashMap<>();
+
+            PdfPTable matTable = new PdfPTable(5);
+            matTable.setWidthPercentage(100);
+            matTable.setWidths(new float[]{18, 30, 12, 12, 28});
+
+            // 列名
+            String[] matHeaders = hasChinese
+                    ? new String[]{"物资编码", "物资名称", "需求数", "单位", "备注"}
+                    : new String[]{"Code", "Name", "Qty", "Unit", "Remark"};
+            for (String h : matHeaders) {
+                PdfPCell cell = new PdfPCell(new Phrase(h, tableHeaderFont));
+                cell.setBackgroundColor(new BaseColor(200, 220, 240));
+                cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                cell.setPadding(4);
+                cell.setFixedHeight(20);
+                matTable.addCell(cell);
             }
 
+            // 数据行
             for (TComponentsLine line : lines) {
-                String matInfo = (line.getMaterialNo() != null ? line.getMaterialNo() : "") + " - "
-                        + (line.getMaterialName() != null ? line.getMaterialName() : "") + " - "
-                        + (line.getDemandQty() != null ? line.getDemandQty().toString() : "0") + " "
-                        + (line.getUnit() != null ? line.getUnit() : "");
-                cs.beginText();
-                cs.newLineAtOffset(margin + 10, yPos);
-                cs.showText(matInfo);
-                cs.endText();
-                yPos -= 16;
+                String unitName = "";
+                if (line.getUnit() != null) {
+                    unitName = unitCache.get(line.getUnit());
+                    if (unitName == null) {
+                        TUnit tUnit = tUnitMapper.selectByGuid(line.getUnit());
+                        unitName = tUnit != null ? tUnit.getUNT_DESC() : line.getUnit();
+                        unitCache.put(line.getUnit(), unitName);
+                    }
+                }
+                String[][] rowData = {
+                        {line.getMaterialNo() != null ? line.getMaterialNo() : ""},
+                        {line.getMaterialName() != null ? line.getMaterialName() : ""},
+                        {line.getDemandQty() != null ? line.getDemandQty().toString() : "0"},
+                        {unitName},
+                        {line.getRemark() != null ? line.getRemark() : ""}
+                };
+                for (String[] data : rowData) {
+                    PdfPCell cell = new PdfPCell(new Phrase(data[0], tableFont));
+                    cell.setBorderColor(BaseColor.LIGHT_GRAY);
+                    cell.setPadding(4);
+                    cell.setFixedHeight(18);
+                    matTable.addCell(cell);
+                }
             }
+            document.add(matTable);
 
-            // 底部日期
-            yPos = margin + 20;
-            String footer = "Generated: " + sdf.format(new Date());
-            cs.beginText();
-            cs.newLineAtOffset(margin, yPos);
-            cs.showText(footer);
-            cs.endText();
+            // ========== 底部日期 ==========
+            com.itextpdf.text.Paragraph footer = new com.itextpdf.text.Paragraph(
+                    hasChinese ? "生成日期: " + sdf.format(new Date()) : "Generated: " + sdf.format(new Date()),
+                    normalFont);
+            footer.setAlignment(Element.ALIGN_RIGHT);
+            footer.setSpacingBefore(20);
+            document.add(footer);
 
-            cs.close();
-
-            // 输出PDF
-            response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition", "attachment; filename=\"components_" + billNo + ".pdf\"");
-            document.save(response.getOutputStream());
+            document.close();
 
         } catch (Exception e) {
             e.printStackTrace();
             try {
                 response.setContentType("text/plain;charset=UTF-8");
                 response.getWriter().write("PDF生成失败：" + e.getMessage());
-            } catch (Exception ignored) {
-            }
-        } finally {
-            try {
-                document.close();
             } catch (Exception ignored) {
             }
         }
