@@ -5,6 +5,8 @@ import com.mjw.vueback.demos.web.entity.SysUser;
 import com.mjw.vueback.demos.web.security.JwtTokenUtil;
 import com.mjw.vueback.demos.web.security.TokenBlacklistService;
 import com.mjw.vueback.demos.web.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,6 +24,8 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "http://localhost:5173")
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -41,13 +45,8 @@ public class AuthController {
     @Autowired
     private com.mjw.vueback.demos.web.service.OnlineUserService onlineUserService;
 
-
-
     @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
-
-    @Value("${jwt.secret:mySecretKey123456789012345678901234567890}")
-    private String jwtSecret;
 
     // 登录接口
     @PostMapping("/login")
@@ -79,8 +78,10 @@ public class AuthController {
             result.put("username", loginRequest.getUsername());
             result.put("role", role);
 
+            logger.info("用户登录成功: {}", loginRequest.getUsername());
             return ApiResponse.success(result);
         } catch (Exception e) {
+            logger.warn("登录失败, username={}: {}", loginRequest.getUsername(), e.getMessage());
             return ApiResponse.error(401, "用户名或密码错误");
         }
     }
@@ -94,8 +95,10 @@ public class AuthController {
                     registerRequest.getPassword(),
                     registerRequest.getEmail()
             );
+            logger.info("用户注册成功: {}", registerRequest.getUsername());
             return ApiResponse.success("注册成功");
         } catch (RuntimeException e) {
+            logger.warn("注册失败, username={}: {}", registerRequest.getUsername(), e.getMessage());
             return ApiResponse.error(400, e.getMessage());
         }
     }
@@ -122,37 +125,29 @@ public class AuthController {
     @PostMapping("/logout")
     public ApiResponse<String> logout(HttpServletRequest request) {
         try {
-            System.out.println("=== 收到退出登录请求 ===");
-            System.out.println("请求URI: " + request.getRequestURI());
-            System.out.println("Authorization Header: " + request.getHeader("Authorization"));
-            
+            logger.info("收到退出登录请求");
+
             // 获取请求中的 Token
             String token = extractTokenFromRequest(request);
-            System.out.println("提取的Token: " + (token != null ? token.substring(0, Math.min(20, token.length())) + "..." : "null"));
-            
+
             if (token != null) {
                 // 获取 Token 的剩余过期时间（秒）
                 long expiration = jwtTokenUtil.getExpirationFromToken(token);
-                System.out.println("Token剩余过期时间（秒）: " + expiration);
-                
+                logger.debug("Token剩余过期时间: {}s", expiration);
+
                 // 将 Token 加入黑名单
                 tokenBlacklistService.addToBlacklist(token, expiration);
-                
+
                 // 从 Token 中获取用户名并标记离线
                 String username = jwtTokenUtil.getUsernameFromToken(token);
                 onlineUserService.setUserOffline(username);
-                System.out.println("用户已标记离线: " + username);
-                
-                // 验证是否添加成功
-                boolean isBlacklisted = tokenBlacklistService.isBlacklisted(token);
-                System.out.println("验证黑名单状态: " + isBlacklisted);
-                
+                logger.info("用户已退出登录: {}", username);
+
                 return ApiResponse.success("退出成功");
             }
             return ApiResponse.error(400, "未找到 Token");
         } catch (Exception e) {
-            System.out.println("退出登录异常: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("退出登录异常", e);
             return ApiResponse.error(500, "退出失败: " + e.getMessage());
         }
     }
@@ -173,7 +168,7 @@ public class AuthController {
     public ApiResponse<Map<String, Object>> refreshToken(@RequestBody RefreshTokenRequest request) {
         try {
             String oldToken = request.getRefreshToken();
-            
+
             // 验证旧 Token
             if (!jwtTokenUtil.validateToken(oldToken)) {
                 return ApiResponse.error(401, "Token 无效或已过期");
@@ -201,15 +196,17 @@ public class AuthController {
             result.put("tokenType", "Bearer");
             result.put("expiresIn", jwtExpiration / 1000);
 
+            logger.info("Token 刷新成功, username={}", username);
             return ApiResponse.success(result);
         } catch (Exception e) {
+            logger.warn("刷新 Token 失败: {}", e.getMessage());
             return ApiResponse.error(401, "刷新 Token 失败");
         }
     }
 
     // 修改密码接口
     @PostMapping("/change-password")
-    public ApiResponse<String> changePassword(@RequestBody ChangePasswordRequest request, 
+    public ApiResponse<String> changePassword(@RequestBody ChangePasswordRequest request,
                                              Authentication authentication) {
         try {
             if (authentication == null || !authentication.isAuthenticated()) {
@@ -228,8 +225,10 @@ public class AuthController {
             user.setPassword(passwordEncoder.encode(request.getNewPassword()));
             userService.updatePassword(user);
 
+            logger.info("用户修改密码成功: {}", username);
             return ApiResponse.success("密码修改成功");
         } catch (Exception e) {
+            logger.error("修改密码失败", e);
             return ApiResponse.error(500, "密码修改失败");
         }
     }

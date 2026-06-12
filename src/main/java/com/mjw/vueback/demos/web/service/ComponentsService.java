@@ -25,6 +25,8 @@ import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class ComponentsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ComponentsService.class);
 
     @Autowired
     private TComponentsMapper tComponentsMapper;
@@ -484,7 +488,7 @@ public class ComponentsService {
             return result;
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "保存失败：" + e.getMessage());
             return result;
@@ -518,7 +522,7 @@ public class ComponentsService {
             return result;
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "保存失败：" + e.getMessage());
             return result;
@@ -565,7 +569,7 @@ public class ComponentsService {
             return result;
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "提交失败：" + e.getMessage());
             return result;
@@ -599,7 +603,7 @@ public class ComponentsService {
             return result;
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "删除失败：" + e.getMessage());
             return result;
@@ -643,7 +647,7 @@ public class ComponentsService {
             return result;
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "删除失败：" + e.getMessage());
             return result;
@@ -692,7 +696,7 @@ public class ComponentsService {
             return result;
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "上传失败：" + e.getMessage());
             return result;
@@ -851,7 +855,7 @@ public class ComponentsService {
             document.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             try {
                 response.setContentType("text/plain;charset=UTF-8");
                 response.getWriter().write("PDF生成失败：" + e.getMessage());
@@ -895,13 +899,13 @@ public class ComponentsService {
             }
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
         } finally {
             try {
                 if (fis != null) fis.close();
                 if (os != null) os.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("操作失败", e);
             }
         }
     }
@@ -953,7 +957,7 @@ public class ComponentsService {
             result.put("flag", 1);
             return result;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "提交失败：" + e.getMessage());
             return result;
@@ -992,7 +996,7 @@ public class ComponentsService {
             result.put("flag", 1);
             return result;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "撤回失败：" + e.getMessage());
             return result;
@@ -1044,7 +1048,7 @@ public class ComponentsService {
             result.put("flag", 1);
             return result;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "设计提交失败：" + e.getMessage());
             return result;
@@ -1083,7 +1087,7 @@ public class ComponentsService {
             result.put("totalCount", requestList.size());
             return result;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "批量保存失败：" + e.getMessage());
             return result;
@@ -1123,7 +1127,7 @@ public class ComponentsService {
             result.put("totalCount", requestList.size());
             return result;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("操作失败", e);
             result.put("flag", 0);
             result.put("message", "批量保存报价失败：" + e.getMessage());
             return result;

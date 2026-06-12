@@ -1,6 +1,8 @@
 package com.mjw.vueback.demos.web.security;
 
 import com.mjw.vueback.demos.web.utils.RedisUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class TokenBlacklistService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TokenBlacklistService.class);
+
     @Autowired
     private RedisUtil redisUtil;
 
@@ -28,20 +32,17 @@ public class TokenBlacklistService {
     public void addToBlacklist(String token, long expiration) {
         String tokenHash = getTokenHash(token);
         String key = BLACKLIST_PREFIX + tokenHash;
-        
-        System.out.println("=== 添加 Token 到黑名单 ===");
-        System.out.println("Token Hash: " + tokenHash);
-        System.out.println("Redis Key: " + key);
-        System.out.println("过期时间（秒）: " + expiration);
-        
+
+        logger.info("添加 Token 到黑名单, hash={}, expiration={}s", tokenHash, expiration);
+
         // 将 Token 存入 Redis，过期时间设置为 Token 的剩余有效期
         if (expiration > 0) {
             redisUtil.set(key, "1", expiration, TimeUnit.SECONDS);
-            System.out.println("Token 已添加到黑名单");
+            logger.debug("Token 已添加到黑名单（正常过期时间）");
         } else {
             // 如果过期时间小于等于0，设置默认30分钟
             redisUtil.set(key, "1", 30, TimeUnit.MINUTES);
-            System.out.println("Token 已添加到黑名单（使用默认过期时间30分钟）");
+            logger.warn("Token 过期时间异常(<=0)，使用默认30分钟, hash={}", tokenHash);
         }
     }
 
@@ -54,7 +55,7 @@ public class TokenBlacklistService {
         String tokenHash = getTokenHash(token);
         String key = BLACKLIST_PREFIX + tokenHash;
         boolean result = redisUtil.hasKey(key);
-        System.out.println("检查 Token 是否在黑名单: " + tokenHash + " -> " + result);
+        logger.debug("检查 Token 黑名单, hash={}, blacklisted={}", tokenHash, result);
         return result;
     }
 
@@ -66,7 +67,7 @@ public class TokenBlacklistService {
         String tokenHash = getTokenHash(token);
         String key = BLACKLIST_PREFIX + tokenHash;
         redisUtil.delete(key);
-        System.out.println("Token 已从黑名单移除: " + tokenHash);
+        logger.info("Token 已从黑名单移除, hash={}", tokenHash);
     }
 
     /**
@@ -82,7 +83,7 @@ public class TokenBlacklistService {
             }
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
-            // 如果 MD5 不可用，使用简单的哈希值
+            logger.warn("MD5 不可用，使用 hashCode 作为 token hash", e);
             return String.valueOf(token.hashCode());
         }
     }

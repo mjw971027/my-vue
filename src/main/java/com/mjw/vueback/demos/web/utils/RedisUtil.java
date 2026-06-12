@@ -1,5 +1,7 @@
 package com.mjw.vueback.demos.web.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -8,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class RedisUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(RedisUtil.class);
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -23,7 +27,7 @@ public class RedisUtil {
             redisTemplate.opsForValue().set(key, value);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Redis set 失败, key={}", key, e);
             return false;
         }
     }
@@ -45,7 +49,7 @@ public class RedisUtil {
             }
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Redis set(带过期时间) 失败, key={}", key, e);
             return false;
         }
     }
@@ -69,7 +73,7 @@ public class RedisUtil {
             redisTemplate.delete(key);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Redis delete 失败, key={}", key, e);
             return false;
         }
     }
@@ -83,7 +87,7 @@ public class RedisUtil {
         try {
             return redisTemplate.hasKey(key);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Redis hasKey 失败, key={}", key, e);
             return false;
         }
     }
@@ -102,7 +106,7 @@ public class RedisUtil {
             }
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Redis expire 失败, key={}", key, e);
             return false;
         }
     }
