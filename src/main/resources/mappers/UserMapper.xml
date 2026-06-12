@@ -3,21 +3,55 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mjw.vueback.demos.web.mapper.UserMapper">
 
+    <!-- 公共列（不返回密码） -->
+    <sql id="baseColumns">
+        id, username, email, role, status, created_at as createdAt, updated_at as updatedAt
+    </sql>
+
     <select id="findByUsername" resultType="com.mjw.vueback.demos.web.entity.SysUser">
-        SELECT id, username, password, email, created_at as createdAt, updated_at as updatedAt
+        SELECT id, username, password, email, role, status, created_at as createdAt, updated_at as updatedAt
         FROM sys_user
         WHERE username = #{username}
     </select>
 
-    <insert id="insert" parameterType="com.mjw.vueback.demos.web.entity.SysUser">
-        INSERT INTO sys_user (username, password, email, created_at, updated_at)
-        VALUES (#{username}, #{password}, #{email}, NOW(), NOW())
+    <select id="findById" resultType="com.mjw.vueback.demos.web.entity.SysUser">
+        SELECT <include refid="baseColumns" />
+        FROM sys_user
+        WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultType="com.mjw.vueback.demos.web.entity.SysUser">
+        SELECT <include refid="baseColumns" />
+        FROM sys_user
+        ORDER BY id ASC
+    </select>
+
+    <insert id="insert" parameterType="com.mjw.vueback.demos.web.entity.SysUser"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_user (username, password, email, role, status, created_at, updated_at)
+        VALUES (#{username}, #{password}, #{email}, #{role}, #{status}, NOW(), NOW())
     </insert>
+
+    <update id="updateById" parameterType="com.mjw.vueback.demos.web.entity.SysUser">
+        UPDATE sys_user
+        <set>
+            <if test="email != null">email = #{email},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
 
     <update id="updatePassword" parameterType="com.mjw.vueback.demos.web.entity.SysUser">
         UPDATE sys_user 
         SET password = #{password}, updated_at = NOW()
         WHERE id = #{id}
     </update>
+
+    <delete id="deleteById">
+        DELETE FROM sys_user WHERE id = #{id}
+    </delete>
 
 </mapper>

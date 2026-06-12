@@ -38,6 +38,9 @@ public class AuthController {
     @Autowired
     private TokenBlacklistService tokenBlacklistService;
 
+    @Autowired
+    private com.mjw.vueback.demos.web.service.OnlineUserService onlineUserService;
+
 
 
     @Value("${jwt.expiration:86400000}")
@@ -58,8 +61,15 @@ public class AuthController {
                     )
             );
 
-            // 生成JWT Token
-            String token = jwtTokenUtil.generateToken(authentication);
+            // 查询用户完整信息（获取 role）
+            SysUser sysUser = userService.findByUsername(loginRequest.getUsername());
+            String role = sysUser != null && sysUser.getRole() != null ? sysUser.getRole() : "USER";
+
+            // 生成JWT Token（携带角色信息）
+            String token = jwtTokenUtil.generateToken(authentication, role);
+
+            // 标记用户在线（24h 过期自动离线）
+            onlineUserService.setUserOnline(loginRequest.getUsername());
 
             // 返回Token和用户信息（匹配前端期望的格式）
             Map<String, Object> result = new HashMap<>();
@@ -67,6 +77,7 @@ public class AuthController {
             result.put("tokenType", "Bearer");
             result.put("expiresIn", jwtExpiration / 1000); // 秒
             result.put("username", loginRequest.getUsername());
+            result.put("role", role);
 
             return ApiResponse.success(result);
         } catch (Exception e) {
@@ -127,6 +138,11 @@ public class AuthController {
                 // 将 Token 加入黑名单
                 tokenBlacklistService.addToBlacklist(token, expiration);
                 
+                // 从 Token 中获取用户名并标记离线
+                String username = jwtTokenUtil.getUsernameFromToken(token);
+                onlineUserService.setUserOffline(username);
+                System.out.println("用户已标记离线: " + username);
+                
                 // 验证是否添加成功
                 boolean isBlacklisted = tokenBlacklistService.isBlacklisted(token);
                 System.out.println("验证黑名单状态: " + isBlacklisted);
@@ -166,11 +182,18 @@ public class AuthController {
             // 获取用户名
             String username = jwtTokenUtil.getUsernameFromToken(oldToken);
 
-            // 生成新 Token
+            // 查询用户完整信息（获取 role）
+            SysUser sysUser = userService.findByUsername(username);
+            String role = sysUser != null && sysUser.getRole() != null ? sysUser.getRole() : "USER";
+
+            // 生成新 Token（携带角色信息）
             UserDetails userDetails = userService.loadUserByUsername(username);
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.getAuthorities());
-            String newToken = jwtTokenUtil.generateToken(authentication);
+            String newToken = jwtTokenUtil.generateToken(authentication, role);
+
+            // 刷新在线标记（延长24h）
+            onlineUserService.setUserOnline(username);
 
             // 返回新 Token
             Map<String, Object> result = new HashMap<>();

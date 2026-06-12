@@ -1,7 +1,9 @@
 package com.mjw.vueback.demos.web.service;
 
 import com.mjw.vueback.demos.web.entity.SysUser;
+import com.mjw.vueback.demos.web.entity.UserPermission;
 import com.mjw.vueback.demos.web.mapper.UserMapper;
+import com.mjw.vueback.demos.web.mapper.UserPermissionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,16 +17,21 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService implements UserDetailsService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private UserPermissionMapper userPermissionMapper;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -40,6 +47,8 @@ public class UserService implements UserDetailsService {
         admin.setUsername("admin");
         admin.setPassword(passwordEncoder.encode("admin123"));
         admin.setEmail("admin@example.com");
+        admin.setRole("ADMIN");
+        admin.setStatus("在线");
         DEFAULT_USERS.put("admin", admin);
 
         // user/123456
@@ -48,6 +57,8 @@ public class UserService implements UserDetailsService {
         user.setUsername("user");
         user.setPassword(passwordEncoder.encode("123456"));
         user.setEmail("user@example.com");
+        user.setRole("USER");
+        user.setStatus("在线");
         DEFAULT_USERS.put("user", user);
     }
 
@@ -84,6 +95,8 @@ public class UserService implements UserDetailsService {
             user.setUsername(username);
             user.setPassword(passwordEncoder.encode(password));
             user.setEmail(email);
+            user.setRole("USER");
+            user.setStatus("在线");
 
             userMapper.insert(user);
             return user;
@@ -122,6 +135,91 @@ public class UserService implements UserDetailsService {
             userMapper.updatePassword(user);
         } catch (Exception e) {
             // 数据库不可用时，模拟成功
+        }
+    }
+
+    // 获取所有用户
+    public List<SysUser> findAllUsers() {
+        try {
+            return userMapper.findAll();
+        } catch (Exception e) {
+            // 数据库不可用时，返回默认用户列表
+            return new ArrayList<>(DEFAULT_USERS.values());
+        }
+    }
+
+    // 根据ID查询用户
+    public SysUser findById(Long id) {
+        try {
+            SysUser user = userMapper.findById(id);
+            if (user == null) {
+                // 回退到默认用户
+                for (SysUser u : DEFAULT_USERS.values()) {
+                    if (u.getId().equals(id)) {
+                        return u;
+                    }
+                }
+            }
+            return user;
+        } catch (Exception e) {
+            // 数据库不可用时，在默认用户中查找
+            for (SysUser u : DEFAULT_USERS.values()) {
+                if (u.getId().equals(id)) {
+                    return u;
+                }
+            }
+            return null;
+        }
+    }
+
+    // 更新用户信息
+    public void updateUser(SysUser user) {
+        try {
+            userMapper.updateById(user);
+        } catch (Exception e) {
+            throw new RuntimeException("更新用户失败: " + e.getMessage());
+        }
+    }
+
+    // 删除用户
+    public void deleteUser(Long id) {
+        try {
+            userMapper.deleteById(id);
+        } catch (Exception e) {
+            throw new RuntimeException("删除用户失败: " + e.getMessage());
+        }
+    }
+
+    // ==================== 页面权限 ====================
+
+    /**
+     * 获取用户的页面权限 key 列表
+     */
+    public List<String> getUserPermissions(Long userId) {
+        try {
+            return userPermissionMapper.findPermissionKeysByUserId(userId);
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 设置用户的页面权限（先清旧权限，再批量插入新权限）
+     */
+    public void setUserPermissions(Long userId, List<String> permissionKeys) {
+        try {
+            // 先删旧的
+            userPermissionMapper.deleteByUserId(userId);
+
+            // 再插入新的
+            if (permissionKeys != null && !permissionKeys.isEmpty()) {
+                List<UserPermission> list = permissionKeys.stream()
+                        .map(key -> new UserPermission(userId, key))
+                        .collect(Collectors.toList());
+                userPermissionMapper.batchInsert(list);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("设置权限失败: " + e.getMessage());
         }
     }
 }

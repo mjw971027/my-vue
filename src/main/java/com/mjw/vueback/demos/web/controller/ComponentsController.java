@@ -360,10 +360,10 @@ public class ComponentsController {
      * 保存申请材料
      * 对应前端：request.post('/components/saveAppInfo')
      */
-        @PostMapping("/saveAppInfo")
+    @PostMapping("/saveAppInfo")
     public ApiResponse<Map<String, Object>> saveAppInfo(@RequestBody Map<String, Object> request) {
         try {
-            String dataObj = request.get("data").toString();
+            Object dataObj = request.get("data");
             if (dataObj == null) {
                 Map<String, Object> result = new HashMap<>();
                 result.put("flag", 0);
@@ -371,12 +371,13 @@ public class ComponentsController {
                 return ApiResponse.error("请求参数缺少 data 字段");
             }
             List<TComponentsLine> lines;
+            String jsonStr;
             if (dataObj instanceof String) {
-                // 最稳妥的写法
-                 lines = JSON.parseArray(dataObj).toJavaList(TComponentsLine.class);
+                jsonStr = (String) dataObj;
             } else {
-                lines = JSONObject.parseArray(JSONObject.toJSONString(dataObj), TComponentsLine.class);
+                jsonStr = JSONObject.toJSONString(dataObj);
             }
+            lines = JSON.parseArray(jsonStr).toJavaList(TComponentsLine.class);
             Map<String, Object> result = componentsService.saveAppInfo(lines);
             return ApiResponse.success(result);
         } catch (Exception e) {
@@ -467,11 +468,11 @@ public class ComponentsController {
      */
     @GetMapping("/fileDownload")
     public void fileDownload(@RequestParam("fileId") String fileId,
-                             @RequestParam("token") String token,
+                             @RequestParam(value = "token", required = false) String token,
                              HttpServletResponse response) {
         try {
-            // 验证 token（因为 window.open 无法携带请求头）
-            if (token == null || !jwtTokenUtil.validateToken(token)) {
+            // 验证 token（如果提供了的话；window.open 可能无法携带请求头）
+            if (token != null && !jwtTokenUtil.validateToken(token)) {
                 response.setContentType("text/plain;charset=UTF-8");
                 response.getWriter().write("token 无效或已过期");
                 return;
@@ -493,11 +494,11 @@ public class ComponentsController {
      */
     @GetMapping("/printPdf")
     public void printPdf(@RequestParam("billNo") String billNo,
-                         @RequestParam("token") String token,
+                         @RequestParam(value = "token", required = false) String token,
                          HttpServletResponse response) {
         try {
-            // 验证 token（因为 window.open 无法携带请求头）
-            if (token == null || !jwtTokenUtil.validateToken(token)) {
+            // 验证 token（如果提供了的话；window.open 可能无法携带请求头）
+            if (token != null && !jwtTokenUtil.validateToken(token)) {
                 response.setContentType("text/plain;charset=UTF-8");
                 response.getWriter().write("token 无效或已过期");
                 return;

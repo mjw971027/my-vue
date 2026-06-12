@@ -30,8 +30,13 @@ public class JwtTokenUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    // 生成Token
+    // 生成Token（不含 role，兼容刷新 Token）
     public String generateToken(Authentication authentication) {
+        return generateToken(authentication, null);
+    }
+
+    // 生成Token（携带角色信息）
+    public String generateToken(Authentication authentication, String role) {
         String username = authentication.getName();
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
@@ -43,6 +48,7 @@ public class JwtTokenUtil {
         return Jwts.builder()
                 .setSubject(username)
                 .claim("auth", authorities)
+                .claim("role", role != null ? role : "")
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey())
@@ -57,6 +63,21 @@ public class JwtTokenUtil {
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
+    }
+
+    // 从Token中获取角色
+    public String getRoleFromToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            String role = claims.get("role", String.class);
+            return role != null && !role.isEmpty() ? role : "USER";
+        } catch (JwtException | IllegalArgumentException e) {
+            return "USER";
+        }
     }
 
     // 验证Token

@@ -126,7 +126,7 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>com.mjw.vueback.VueBackApplication</mainClass>
-                    <skip>true</skip>
+                    <!-- 不跳过 repackage，确保生成可执行 fat jar（Docker 需要） -->
                 </configuration>
                 <executions>
                     <execution>

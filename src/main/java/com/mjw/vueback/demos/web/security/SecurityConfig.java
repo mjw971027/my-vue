@@ -27,8 +27,10 @@ public class SecurityConfig {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeRequests()
-                // 放行接口
+                // 放行接口register
                 .antMatchers("/error").permitAll()  // 放行错误页面
+
+                .antMatchers("/api/user/register").permitAll()  // 放行认证接口（登录、注册等）
                 .antMatchers("/api/auth/**").permitAll()  // 放行认证接口（登录、注册等）
                 .antMatchers("/api/components/fileDownload").permitAll()  // 放行文件下载（window.open 无法携带请求头）
                 .antMatchers("/api/components/printPdf").permitAll()  // 放行PDF打印（window.open 无法携带请求头）

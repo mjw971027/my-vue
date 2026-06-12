@@ -1,0 +1,77 @@
+# ============================================================
+# docker-compose.yml - VUE-BACK 后端服务完整部署
+# 包含：MySQL 8 + Redis 7 + Spring Boot 应用
+# ============================================================
+version: '3.8'
+
+services:
+
+  # ---- MySQL 数据库 ----
+  mysql:
+    image: mysql:8.0
+    container_name: vue-back-mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"            # 宿主机 3307 → 容器 3306（避免与本地 MySQL 冲突）
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: vue_back
+      MYSQL_USER: mjw001
+      MYSQL_PASSWORD: 123456
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql_data:/var/lib/mysql           # 持久化数据
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/01-init.sql   # 初始化建表
+      - ./docker/timezone.cnf:/etc/mysql/conf.d/timezone.cnf        # 时区配置
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Redis 缓存 ----
+  redis:
+    image: redis:7-alpine
+    container_name: vue-back-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"            # 宿主机 6380 → 容器 6379（避免与本地 Redis 冲突）
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Spring Boot 应用 ----
+  app:
+    build: .
+    container_name: vue-back-app
+    restart: unless-stopped
+    ports:
+      - "8081:8081"            # 宿主机 8081 → 容器 8081
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # 覆盖 application.properties 中的数据库连接（指向 Docker 内的 MySQL）
+      - spring.datasource.url=jdbc:mysql://mysql:3306/vue_back?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      - spring.datasource.username=mjw001
+      - spring.datasource.password=123456
+      # 覆盖 Redis 连接（指向 Docker 内的 Redis）
+      - spring.redis.host=redis
+      - spring.redis.port=6379
+      # 时区
+      - TZ=Asia/Shanghai
+    volumes:
+      - app_logs:/app/logs       # 日志持久化
+
+volumes:
+  mysql_data:
+  redis_data:
+  app_logs:

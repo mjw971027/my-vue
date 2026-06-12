@@ -1,0 +1,37 @@
+# ============================================================
+# .dockerignore - 排除 Docker 构建上下文中不需要的文件
+# ============================================================
+
+# 本地编译输出
+target/
+*.jar
+*.war
+
+# 日志
+logs/
+*.log
+
+# IDE 配置
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# 版本控制
+.git/
+.gitignore
+
+# OS 文件
+.DS_Store
+Thumbs.db
+
+# Node / 前端 (如果混在一起)
+node_modules/
+dist/
+
+# Docker 构建本身
+Dockerfile
+docker-compose.yml
+.dockerignore
