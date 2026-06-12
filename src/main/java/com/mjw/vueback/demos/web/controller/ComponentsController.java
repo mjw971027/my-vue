@@ -468,15 +468,26 @@ public class ComponentsController {
      */
     @GetMapping("/fileDownload")
     public void fileDownload(@RequestParam("fileId") String fileId,
-                             @RequestParam(value = "token", required = false) String token,
+                             HttpServletRequest request,
                              HttpServletResponse response) {
         try {
-            // 验证 token（如果提供了的话；window.open 可能无法携带请求头）
-            if (token != null && !jwtTokenUtil.validateToken(token)) {
-                response.setContentType("text/plain;charset=UTF-8");
-                response.getWriter().write("token 无效或已过期");
+            // 从 Authorization 请求头获取 Token
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":401,\"message\":\"未登录或 Token 缺失\"}");
                 return;
             }
+
+            String token = authHeader.substring(7);
+            if (!jwtTokenUtil.validateToken(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":401,\"message\":\"Token 无效或已过期\"}");
+                return;
+            }
+
             componentsService.fileDownload(fileId, response);
         } catch (Exception e) {
             // 数据库不可用时，返回错误信息
@@ -494,15 +505,26 @@ public class ComponentsController {
      */
     @GetMapping("/printPdf")
     public void printPdf(@RequestParam("billNo") String billNo,
-                         @RequestParam(value = "token", required = false) String token,
+                         HttpServletRequest request,      // ← 新增
                          HttpServletResponse response) {
         try {
-            // 验证 token（如果提供了的话；window.open 可能无法携带请求头）
-            if (token != null && !jwtTokenUtil.validateToken(token)) {
-                response.setContentType("text/plain;charset=UTF-8");
-                response.getWriter().write("token 无效或已过期");
+            // 从 Authorization 请求头获取 Token（而非 URL 参数）
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":401,\"message\":\"未登录或 Token 缺失\"}");
                 return;
             }
+
+            String token = authHeader.substring(7);  // 去掉 "Bearer "
+            if (!jwtTokenUtil.validateToken(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"code\":401,\"message\":\"Token 无效或已过期\"}");
+                return;
+            }
+
             componentsService.generatePdf(billNo, response);
         } catch (Exception e) {
             e.printStackTrace();
@@ -513,6 +535,7 @@ public class ComponentsController {
             }
         }
     }
+
 
     // ==================== 以下为新增接口（基于旧mo项目补充）====================
 
