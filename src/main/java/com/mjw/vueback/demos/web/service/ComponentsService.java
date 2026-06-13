@@ -140,9 +140,12 @@ public class ComponentsService {
         map.put("finalNumberNo", tc.getFinalNumberNo() != null ? tc.getFinalNumberNo().toString() : "0");
         map.put("maStatus", tc.getMaStatus());
         map.put("maStatusDesc", MockDataService.getStatusDesc(tc.getMaStatus()));
-        map.put("appUser", tc.getCreateUserId() != null ? tc.getCreateUserId() : "");
-        map.put("empNo", tc.getCreateUserId() != null ? tc.getCreateUserId() : "");
-        map.put("createUserId", tc.getCreateUserId());
+        String rawCreateUser = tc.getCreateUserId();
+        String createUserName = resolveUserName(rawCreateUser);
+        map.put("appUser", createUserName);
+        map.put("empNo", createUserName);
+        map.put("createUserId", rawCreateUser);
+        map.put("createUserName", createUserName);
         map.put("createDate", tc.getCreateDate() != null ? tc.getCreateDate().toString() : "");
         map.put("tel", tc.getTel() != null ? tc.getTel() : "");
         map.put("remark", tc.getRemark() != null ? tc.getRemark() : "");
@@ -152,6 +155,33 @@ public class ComponentsService {
         map.put("dwgno", tc.getDwgno() != null ? tc.getDwgno() : "");
         map.put("needDate", tc.getNeedDate() != null ? tc.getNeedDate().toString() : "");
         return map;
+    }
+
+    /**
+     * 根据 createUserId 解析出用户名
+     * createUserId 可能是数字ID（种子数据）或是用户名（程序写入），统一解析为用户名
+     */
+    private String resolveUserName(String createUserId) {
+        if (createUserId == null || createUserId.isEmpty()) {
+            return "";
+        }
+        // 尝试按数字ID解析
+        try {
+            Long userId = Long.parseLong(createUserId.trim());
+            SysUser user = userService.findById(userId);
+            if (user != null) {
+                return user.getUsername();
+            }
+        } catch (NumberFormatException ignored) {
+            // 不是数字ID，可能是用户名
+        }
+        // 尝试按用户名查找（如果本身已经是用户名或者ID解析失败回退查找）
+        SysUser user = userService.findByUsername(createUserId.trim());
+        if (user != null) {
+            return user.getUsername();
+        }
+        // 都没找到，返回原始值
+        return createUserId;
     }
 
     /**
@@ -283,7 +313,10 @@ public class ComponentsService {
         map.put("billNo", tc.getBillNo());
         map.put("companyEnDesc", tc.getCompanyNo()); // 前端期望companyEnDesc
         map.put("deptDesc", tc.getDeptName() != null ? tc.getDeptName() : tc.getDeptNo());
-        map.put("appUser", tc.getCreateUserId());
+        String rawCreateUser = tc.getCreateUserId();
+        map.put("appUser", resolveUserName(rawCreateUser));
+        map.put("createUserId", rawCreateUser);
+        map.put("createUserName", resolveUserName(rawCreateUser));
         map.put("appDate", tc.getAppDate() != null ? tc.getAppDate().toString() : "");
         map.put("projNo", tc.getProjNo());
         map.put("divCd", tc.getDivCd());
@@ -371,6 +404,7 @@ public class ComponentsService {
             map.put("guid", op.getGuid());
             map.put("componentsId", op.getComponentsId());
             map.put("createUserId", op.getAuditUserName() != null ? op.getAuditUserName() : op.getAuditUserId());
+            map.put("createUserName", op.getAuditUserName() != null ? op.getAuditUserName() : op.getAuditUserId());
             map.put("opinion", op.getOpinionContent());
             map.put("stepName", op.getOpinionType());
             map.put("createDate", op.getAuditDate() != null ? op.getAuditDate().toString() : "");
@@ -843,6 +877,63 @@ public class ComponentsService {
                 }
             }
             document.add(matTable);
+
+            // ========== 审批意见过程 ==========
+            List<TComponentsOpinion> opinions = tComponentsOpinionMapper.selectByComponentsId(tc.getGuid());
+            if (opinions != null && !opinions.isEmpty()) {
+                com.itextpdf.text.Paragraph opTitle = new com.itextpdf.text.Paragraph(
+                        hasChinese ? "审批意见过程" : "Approval Process", headerFont);
+                opTitle.setSpacingBefore(10);
+                opTitle.setSpacingAfter(8);
+                document.add(opTitle);
+
+                // 审批步骤名称映射
+                Map<String, String> stepNameMap = new HashMap<>();
+                stepNameMap.put("01", "部门主管审批");
+                stepNameMap.put("02", "技术主管审批");
+                stepNameMap.put("03", "总经理审批");
+
+                PdfPTable opTable = new PdfPTable(4);
+                opTable.setWidthPercentage(100);
+                opTable.setWidths(new float[]{15, 18, 40, 27});
+                opTable.setSpacingAfter(15);
+
+                // 表头
+                String[] opHeaders = hasChinese
+                        ? new String[]{"审批步骤", "审批人", "审批意见", "审批日期"}
+                        : new String[]{"Step", "Approver", "Opinion", "Date"};
+                for (String h : opHeaders) {
+                    PdfPCell cell = new PdfPCell(new Phrase(h, tableHeaderFont));
+                    cell.setBackgroundColor(new BaseColor(200, 220, 240));
+                    cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    cell.setPadding(4);
+                    cell.setFixedHeight(20);
+                    opTable.addCell(cell);
+                }
+
+                // 按审核日期排序
+                opinions.sort(Comparator.comparing(
+                        o -> o.getAuditDate() != null ? o.getAuditDate() : o.getCreateDate(),
+                        Comparator.nullsLast(Comparator.naturalOrder())));
+
+                for (TComponentsOpinion op : opinions) {
+                    String stepName = stepNameMap.getOrDefault(op.getOpinionType(), "审批");
+                    String approver = op.getAuditUserName() != null ? op.getAuditUserName() : "";
+                    String opinion = op.getOpinionContent() != null ? op.getOpinionContent() : "";
+                    String date = op.getAuditDate() != null ? sdf.format(op.getAuditDate())
+                            : (op.getCreateDate() != null ? sdf.format(op.getCreateDate()) : "");
+
+                    String[][] opRow = {{stepName}, {approver}, {opinion}, {date}};
+                    for (String[] opData : opRow) {
+                        PdfPCell cell = new PdfPCell(new Phrase(opData[0], tableFont));
+                        cell.setBorderColor(BaseColor.LIGHT_GRAY);
+                        cell.setPadding(4);
+                        cell.setFixedHeight(18);
+                        opTable.addCell(cell);
+                    }
+                }
+                document.add(opTable);
+            }
 
             // ========== 底部日期 ==========
             com.itextpdf.text.Paragraph footer = new com.itextpdf.text.Paragraph(

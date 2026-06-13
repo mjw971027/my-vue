@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>前后端分离架构讲解 - 工装管理系统实战</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: #0f0f1a;
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ===== 幻灯片容器 ===== */
+  .slideshow {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 60px;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .slide.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== 导航按钮 ===== */
+  .nav-btn {
+    position: fixed;
+    bottom: 30px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    padding: 10px 28px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
+  #prevBtn { left: 30px; }
+  #nextBtn { right: 30px; }
+
+  /* 页码 */
+  .page-indicator {
+    position: fixed;
+    bottom: 38px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+    z-index: 1000;
+  }
+
+  /* ===== 通用样式 ===== */
+  h1 { font-size: 3.2rem; font-weight: 800; line-height: 1.2; }
+  h2 { font-size: 2rem; font-weight: 700; margin-bottom: 30px; }
+  h3 { font-size: 1.3rem; font-weight: 600; }
+  p, li { font-size: 1.05rem; line-height: 1.8; color: rgba(255,255,255,0.88); }
+
+  .tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .tag-blue { background: rgba(96,165,250,0.2); color: #60a5fa; border: 1px solid rgba(96,165,250,0.4); }
+  .tag-green { background: rgba(52,211,153,0.2); color: #34d399; border: 1px solid rgba(52,211,153,0.4); }
+  .tag-purple { background: rgba(167,139,250,0.2); color: #a78bfa; border: 1px solid rgba(167,139,250,0.4); }
+  .tag-orange { background: rgba(251,146,60,0.2); color: #fb923c; border: 1px solid rgba(251,146,60,0.4); }
+  .tag-red { background: rgba(248,113,113,0.2); color: #f87171; border: 1px solid rgba(248,113,113,0.4); }
+  .tag-yellow { background: rgba(234,179,8,0.2); color: #fbbf24; border: 1px solid rgba(234,179,8,0.4); }
+
+  .card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 24px 28px;
+    backdrop-filter: blur(10px);
+  }
+
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.88rem;
+    color: #a5f3fc;
+  }
+
+  pre {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #d1fae5;
+    overflow-x: auto;
+    text-align: left;
+    width: 100%;
+  }
+
+  pre .kw { color: #c084fc; }
+  pre .str { color: #fbbf24; }
+  pre .cm { color: #6b7280; font-style: italic; }
+  pre .fn { color: #60a5fa; }
+  pre .cls { color: #34d399; }
+  pre .num { color: #fb923c; }
+
+  /* ===== 幻灯片 1：封面 ===== */
+  #slide-1 {
+    background: radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.35) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(16,185,129,0.25) 0%, transparent 60%),
+                linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+  }
+
+  .cover-badge {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .cover-title { text-align: center; }
+  .cover-title .main-title {
+    font-size: 3.8rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #818cf8 0%, #34d399 50%, #60a5fa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
+  .cover-title .sub-title {
+    font-size: 1.5rem;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 20px;
+  }
+  .cover-title .desc {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.45);
+  }
+
+  .floating-icons {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .fi {
+    position: absolute;
+    opacity: 0.07;
+    font-size: 80px;
+  }
+
+  /* ===== 幻灯片 2：什么是前后端分离 ===== */
+  #slide-2 {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 0;
+    width: 100%;
+    max-width: 900px;
+    align-items: start;
+  }
+
+  .compare-col { padding: 0 10px; }
+  .compare-center { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; }
+  .vs-arrow { font-size: 2.5rem; color: rgba(255,255,255,0.3); }
+
+  .compare-header {
+    text-align: center;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .header-old { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+  .header-new { background: rgba(52,211,153,0.2); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.4); }
+
+  .compare-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.8);
+  }
+  .compare-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+
+  /* ===== 幻灯片 3：本项目技术栈 ===== */
+  #slide-3 {
+    background: linear-gradient(135deg, #0c1445 0%, #0f2027 100%);
+  }
+
+  .tech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .tech-card {
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tech-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+  .tech-front { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); }
+  .tech-front::before { background: linear-gradient(90deg, #6366f1, #818cf8); }
+  .tech-back { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); }
+  .tech-back::before { background: linear-gradient(90deg, #10b981, #34d399); }
+
+  .tech-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; }
+  .tech-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+  .tech-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.88rem;
+  }
+  .tech-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot-blue { background: #818cf8; }
+  .dot-green { background: #34d399; }
+  .dot-yellow { background: #fbbf24; }
+  .dot-red { background: #f87171; }
+  .dot-cyan { background: #22d3ee; }
+  .dot-purple { background: #c084fc; }
+  .dot-orange { background: #fb923c; }
+
+  /* ===== 幻灯片 4：整体架构图 ===== */
+  #slide-4 {
+    background: linear-gradient(135deg, #0f172a 0%, #071a2e 100%);
+  }
+
+  .arch-container {
+    width: 100%;
+    max-width: 960px;
+  }
+
+  .arch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  .arch-box {
+    border-radius: 12px;
+    padding: 14px 20px;
+    text-align: center;
+    min-width: 130px;
+    position: relative;
+  }
+  .arch-title { font-size: 0.82rem; font-weight: 700; margin-bottom: 5px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
+  .arch-name { font-size: 1rem; font-weight: 600; }
+  .arch-sub { font-size: 0.75rem; opacity: 0.65; margin-top: 3px; }
+
+  .box-browser { background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.5); }
+  .box-vue { background: rgba(52,211,153,0.2); border: 1px solid rgba(52,211,153,0.5); }
+  .box-pinia { background: rgba(251,146,60,0.2); border: 1px solid rgba(251,146,60,0.5); }
+  .box-router { background: rgba(249,115,22,0.18); border: 1px solid rgba(249,115,22,0.5); }
+  .box-axios { background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); }
+  .box-spring { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.5); }
+  .box-jwt { background: rgba(234,179,8,0.2); border: 1px solid rgba(234,179,8,0.5); }
+  .box-redis { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.5); }
+  .box-mysql { background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.5); }
+  .box-mybatis { background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.5); }
+
+  .arch-arrow {
+    color: rgba(255,255,255,0.35);
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+  }
+  .arch-divider {
+    text-align: center;
+    color: rgba(255,255,255,0.3);
+    font-size: 0.78rem;
+    letter-spacing: 4px;
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+  }
+  .arch-divider::before, .arch-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    max-width: 150px;
+  }
+
+  /* ===== 幻灯片 5：JWT 认证流程 ===== */
+  #slide-5 {
+    background: linear-gradient(135deg, #1a0533 0%, #0f0f1a 100%);
+  }
+
+  .flow-container {
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .flow-steps {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: 24px;
+  }
+
+  .flow-step {
+    flex: 1;
+    border-radius: 12px;
+    padding: 16px 14px;
+    text-align: center;
+    position: relative;
+  }
+  .flow-step-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700;
+    margin: 0 auto 8px;
+  }
+  .flow-step-title { font-size: 0.88rem; font-weight: 600; margin-bottom: 5px; }
+  .flow-step-desc { font-size: 0.75rem; color: rgba(255,255,255,0.6); line-height: 1.5; }
+
+  .flow-arrow-container {
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    color: rgba(255,255,255,0.3);
+    font-size: 1.4rem;
+  }
+
+  .step-login { background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4); }
+  .step-verify { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); }
+  .step-jwt { background: rgba(234,179,8,0.2); border: 1px solid rgba(234,179,8,0.4); }
+  .step-redis { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); }
+  .step-access { background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.4); }
+
+  .jwt-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* ===== 幻灯片 6：Axios封装 ===== */
+  #slide-6 {
+    background: linear-gradient(135deg, #0d1f36 0%, #0f0f1a 100%);
+  }
+
+  .code-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 1050px;
+    align-items: start;
+  }
+
+  /* ===== 幻灯片 7：路由守卫 ===== */
+  #slide-7 {
+    background: linear-gradient(135deg, #0f1a2e 0%, #1a0533 50%, #0f0f1a 100%);
+  }
+
+  .guard-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    width: 100%;
+    max-width: 1000px;
+    align-items: start;
+  }
+
+  .guard-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .guard-node {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+  }
+  .guard-node-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .guard-node-text { flex: 1; }
+  .guard-node-label { font-weight: 600; margin-bottom: 2px; }
+  .guard-node-desc { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+
+  .gn-entry { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); }
+  .gn-auth { background: rgba(234,179,8,0.15); border: 1px solid rgba(234,179,8,0.3); }
+  .gn-admin { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); }
+  .gn-perm { background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.3); }
+  .gn-ok { background: rgba(52,211,153,0.15); border: 1px solid rgba(52,211,153,0.3); }
+
+  .guard-arrow-down {
+    text-align: center;
+    color: rgba(255,255,255,0.3);
+    font-size: 1.2rem;
+  }
+
+  /* ===== 幻灯片 8：目录结构 ===== */
+  #slide-8 {
+    background: linear-gradient(135deg, #071a2e 0%, #1a0a2e 100%);
+  }
+
+  .dir-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    width: 100%;
+    max-width: 960px;
+  }
+
+  .dir-tree {
+    font-family: 'Consolas', monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.85);
+  }
+  .dir-tree .folder { color: #fbbf24; }
+  .dir-tree .file { color: #a5f3fc; }
+  .dir-tree .comment { color: #6b7280; font-style: italic; }
+  .dir-tree .highlight { color: #34d399; font-weight: 600; }
+
+  /* ===== 幻灯片 9：API 接口规范 ===== */
+  #slide-9 {
+    background: linear-gradient(135deg, #0a1628 0%, #0f0f1a 100%);
+  }
+
+  .api-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 980px;
+  }
+
+  .api-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .api-table th {
+    background: rgba(255,255,255,0.1);
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+  }
+  .api-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.82);
+  }
+  .api-table tr:hover td { background: rgba(255,255,255,0.04); }
+  .method { font-weight: 700; font-size: 0.78rem; padding: 2px 8px; border-radius: 4px; }
+  .get { background: rgba(52,211,153,0.2); color: #34d399; }
+  .post { background: rgba(96,165,250,0.2); color: #60a5fa; }
+  .put { background: rgba(251,146,60,0.2); color: #fb923c; }
+  .del { background: rgba(248,113,113,0.2); color: #f87171; }
+
+  /* ===== 幻灯片 10：优势总结 ===== */
+  #slide-10 {
+    background: radial-gradient(ellipse at 30% 70%, rgba(16,185,129,0.25) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 20%, rgba(99,102,241,0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    width: 100%;
+    max-width: 960px;
+    margin-bottom: 24px;
+  }
+
+  .summary-card {
+    border-radius: 16px;
+    padding: 22px 18px;
+    text-align: center;
+    transition: transform 0.3s;
+  }
+  .summary-card:hover { transform: translateY(-4px); }
+  .summary-icon { font-size: 2.2rem; margin-bottom: 10px; }
+  .summary-title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+  .summary-desc { font-size: 0.8rem; color: rgba(255,255,255,0.65); line-height: 1.6; }
+
+  .sc1 { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); }
+  .sc2 { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); }
+  .sc3 { background: rgba(234,179,8,0.15); border: 1px solid rgba(234,179,8,0.3); }
+  .sc4 { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); }
+  .sc5 { background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.3); }
+  .sc6 { background: rgba(251,146,60,0.15); border: 1px solid rgba(251,146,60,0.3); }
+
+  .final-quote {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.6);
+    font-style: italic;
+    text-align: center;
+    padding: 16px 30px;
+    border-left: 3px solid #34d399;
+    background: rgba(52,211,153,0.06);
+    border-radius: 0 10px 10px 0;
+    max-width: 700px;
+  }
+
+  /* 进度条 */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #818cf8, #34d399);
+    transition: width 0.4s ease;
+    z-index: 999;
+  }
+
+  /* 幻灯片编号显示 */
+  .slide-num {
+    position: fixed;
+    top: 16px;
+    right: 24px;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.35);
+    z-index: 999;
+    font-family: monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- 进度条 -->
+<div class="progress-bar" id="progressBar"></div>
+<div class="slide-num" id="slideNum">01 / 10</div>
+
+<!-- ============================================================ -->
+<!-- 幻灯片 1：封面                                                 -->
+<!-- ============================================================ -->
+<div class="slideshow">
+
+  <div class="slide active" id="slide-1">
+    <div class="floating-icons">
+      <span class="fi" style="top:8%;left:5%">⚡</span>
+      <span class="fi" style="top:15%;right:8%">🔗</span>
+      <span class="fi" style="bottom:20%;left:3%">🗄️</span>
+      <span class="fi" style="bottom:10%;right:5%">🛡️</span>
+      <span class="fi" style="top:50%;right:3%">🚀</span>
+    </div>
+    <div class="cover-badge">
+      <span class="tag tag-blue">Vue 3 + TypeScript</span>
+      <span class="tag tag-green">Spring Boot 2.6</span>
+      <span class="tag tag-purple">JWT + Redis</span>
+      <span class="tag tag-orange">MyBatis + MySQL</span>
+    </div>
+    <div class="cover-title">
+      <div class="main-title">前后端分离架构</div>
+      <div class="sub-title">工装管理系统 · 实战详解</div>
+      <div class="desc">基于真实项目 vue-app（前端）+ VUE-BACK（后端）讲解现代前后端分离全栈开发</div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 2：什么是前后端分离 — 本项目的真实演进                       -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-2">
+    <h2>从「一体」到「分离」— 工装管理系统的架构演进</h2>
+    <div class="compare-grid">
+      <div class="compare-col">
+        <div class="compare-header header-old">❌ 旧版架构：前后端一体 + HTML + MiniUI</div>
+        <div class="compare-item"><span class="compare-icon">🔴</span><span>前端 <strong>HTML + MiniUI</strong> 文件直接放在后端项目 <code>resources</code> 目录中</span></div>
+        <div class="compare-item"><span class="compare-icon">🔴</span><span>页面由 Spring Boot 静态资源直接返回，没有独立前端工程</span></div>
+        <div class="compare-item"><span class="compare-icon">🔴</span><span>MiniUI 是 jQuery 时代的 <strong>企业级 DOM 操作插件</strong>，无现代 MVVM 能力</span></div>
+        <div class="compare-item"><span class="compare-icon">🔴</span><span>每次页面切换都是 <strong>全量刷新</strong>，无 SPA 路由，体验差</span></div>
+        <div class="compare-item"><span class="compare-icon">🔴</span><span>前后端在同一个 Maven 工程中，<strong>部署必须同步</strong></span></div>
+        <div class="compare-item"><span class="compare-icon">🔴</span><span>难以复用后端接口给 APP / 小程序</span></div>
+      </div>
+      <div class="compare-center">
+        <div class="vs-arrow">⚡</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);text-align:center">渐进式<br>迁移</div>
+        <div class="vs-arrow">→</div>
+      </div>
+      <div class="compare-col">
+        <div class="compare-header header-new">✅ 新版架构：前后端分离 + Vue 3 + Element Plus</div>
+        <div class="compare-item"><span class="compare-icon">🟢</span><span>前端（vue-app）<strong>独立工程</strong>，Vite 构建，独立部署</span></div>
+        <div class="compare-item"><span class="compare-icon">🟢</span><span>使用 <strong>Vue 3 组件化</strong> 替代 MiniUI DOM 操作</span></div>
+        <div class="compare-item"><span class="compare-icon">🟢</span><span>UI 库从 MiniUI → <strong>Element Plus</strong>，原生 Vue 生态</span></div>
+        <div class="compare-item"><span class="compare-icon">🟢</span><span><strong>SPA 单页应用</strong>，Vue Router 前端路由，无刷新切换</span></div>
+        <div class="compare-item"><span class="compare-icon">🟢</span><span>后端（VUE-BACK）只提供 <code>RESTful JSON API</code></span></div>
+        <div class="compare-item"><span class="compare-icon">🟢</span><span>前后端<strong>独立发版</strong>，同一套 API 可对接多端</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 3：技术栈全览 — 新旧对比                                   -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-3">
+    <h2>📦 技术栈演进：MiniUI → Vue 3</h2>
+    <div style="display:flex;gap:14px;margin-bottom:16px;max-width:900px;flex-wrap:wrap;justify-content:center">
+      <span class="tag tag-red">旧版前端：HTML + MiniUI + jQuery Ajax</span>
+      <span style="font-size:1.2rem;color:rgba(255,255,255,0.3)">→</span>
+      <span class="tag tag-green">新版前端：Vue 3 + TypeScript + Axios</span>
+    </div>
+    <div class="tech-grid">
+      <div class="tech-card tech-front">
+        <div class="tech-title" style="color:#818cf8">🎨 新版前端（vue-app）</div>
+        <div style="font-size:0.82rem;color:rgba(255,255,255,0.55);margin-bottom:10px">端口 5173 · TypeScript · 独立 Vite 工程</div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-bottom:6px">核心框架</div>
+        <div class="tech-row">
+          <div class="tech-item"><div class="tech-dot dot-blue"></div>Vue 3.5</div>
+          <div class="tech-item"><div class="tech-dot dot-cyan"></div>TypeScript 6</div>
+          <div class="tech-item"><div class="tech-dot dot-purple"></div>Vite 8</div>
+        </div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin:10px 0 6px">状态与路由</div>
+        <div class="tech-row">
+          <div class="tech-item"><div class="tech-dot dot-yellow"></div>Pinia 3</div>
+          <div class="tech-item"><div class="tech-dot dot-orange"></div>Vue Router 5</div>
+        </div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin:10px 0 6px">UI & 网络</div>
+        <div class="tech-row">
+          <div class="tech-item"><div class="tech-dot dot-blue"></div>Element Plus 2</div>
+          <div class="tech-item"><div class="tech-dot dot-green"></div>Axios 1.17</div>
+        </div>
+      </div>
+      <div class="tech-card tech-back">
+        <div class="tech-title" style="color:#34d399">🖥️ 后端（VUE-BACK / my-vue）</div>
+        <div style="font-size:0.82rem;color:rgba(255,255,255,0.55);margin-bottom:10px">端口 8082 · Java 8 · Spring Boot 2.6</div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-bottom:6px">核心框架</div>
+        <div class="tech-row">
+          <div class="tech-item"><div class="tech-dot dot-green"></div>Spring Boot 2.6</div>
+          <div class="tech-item"><div class="tech-dot dot-cyan"></div>Spring Security</div>
+        </div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin:10px 0 6px">持久层 & 缓存</div>
+        <div class="tech-row">
+          <div class="tech-item"><div class="tech-dot dot-yellow"></div>MyBatis 2.2</div>
+          <div class="tech-item"><div class="tech-dot dot-blue"></div>MySQL</div>
+          <div class="tech-item"><div class="tech-dot dot-red"></div>Redis</div>
+          <div class="tech-item"><div class="tech-dot dot-orange"></div>Druid 连接池</div>
+        </div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin:10px 0 6px">安全 & 工具</div>
+        <div class="tech-row">
+          <div class="tech-item"><div class="tech-dot dot-yellow"></div>JWT (jjwt 0.11)</div>
+          <div class="tech-item"><div class="tech-dot dot-purple"></div>FastJSON</div>
+          <div class="tech-item"><div class="tech-dot dot-green"></div>PDFBox</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+      <span class="tag tag-blue">旧版前端使用 MiniUI（jQuery 插件）DOM 操作</span>
+      <span class="tag tag-green">新版前端用 Vue 3 组件化 + TypeScript</span>
+      <span class="tag tag-purple">Docker + docker-compose 支持容器化部署</span>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 4：整体架构图                                           -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-4">
+    <h2>🏗️ 系统整体架构</h2>
+    <div class="arch-container">
+      <!-- 浏览器层 -->
+      <div class="arch-row">
+        <div class="arch-box box-browser" style="min-width:200px">
+          <div class="arch-title">用户端</div>
+          <div class="arch-name">🌐 浏览器</div>
+          <div class="arch-sub">Chrome / Edge / Firefox</div>
+        </div>
+      </div>
+      <div class="arch-row"><div class="arch-arrow">↕</div></div>
+      <div class="arch-divider">前 端 层（port 5173）</div>
+      <!-- 前端层 -->
+      <div class="arch-row" style="flex-wrap:wrap">
+        <div class="arch-box box-vue">
+          <div class="arch-title">视图</div>
+          <div class="arch-name">🎨 Vue 3</div>
+          <div class="arch-sub">SPA 组件化渲染</div>
+        </div>
+        <div class="arch-arrow">↔</div>
+        <div class="arch-box box-pinia">
+          <div class="arch-title">状态管理</div>
+          <div class="arch-name">🍍 Pinia</div>
+          <div class="arch-sub">Token / 用户信息</div>
+        </div>
+        <div class="arch-arrow">↔</div>
+        <div class="arch-box box-router">
+          <div class="arch-title">路由</div>
+          <div class="arch-name">🔀 Vue Router</div>
+          <div class="arch-sub">权限守卫</div>
+        </div>
+        <div class="arch-arrow">↔</div>
+        <div class="arch-box box-axios">
+          <div class="arch-title">网络层</div>
+          <div class="arch-name">📡 Axios</div>
+          <div class="arch-sub">拦截器 + Token 刷新</div>
+        </div>
+      </div>
+      <div class="arch-row"><div class="arch-arrow">↕</div></div>
+      <div class="arch-divider" style="letter-spacing:2px">HTTP / JSON API（CORS 跨域）</div>
+      <div class="arch-row"><div class="arch-arrow">↕</div></div>
+      <div class="arch-divider">后 端 层（port 8082）</div>
+      <!-- 后端层 -->
+      <div class="arch-row" style="flex-wrap:wrap">
+        <div class="arch-box box-spring">
+          <div class="arch-title">控制层</div>
+          <div class="arch-name">🌱 Spring Boot</div>
+          <div class="arch-sub">REST Controller</div>
+        </div>
+        <div class="arch-arrow">↔</div>
+        <div class="arch-box box-jwt">
+          <div class="arch-title">认证</div>
+          <div class="arch-name">🔑 JWT</div>
+          <div class="arch-sub">Token 签发 / 校验</div>
+        </div>
+        <div class="arch-arrow">↔</div>
+        <div class="arch-box box-redis">
+          <div class="arch-title">缓存</div>
+          <div class="arch-name">🔴 Redis</div>
+          <div class="arch-sub">在线状态 24h TTL</div>
+        </div>
+        <div class="arch-arrow">↔</div>
+        <div class="arch-box box-mybatis">
+          <div class="arch-title">持久层</div>
+          <div class="arch-name">🗃️ MyBatis</div>
+          <div class="arch-sub">SQL Mapper</div>
+        </div>
+        <div class="arch-arrow">↔</div>
+        <div class="arch-box box-mysql">
+          <div class="arch-title">数据库</div>
+          <div class="arch-name">🐬 MySQL</div>
+          <div class="arch-sub">T_COMPONENTS 等</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 5：JWT 认证流程                                         -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-5">
+    <h2>🔑 JWT + Redis 认证流程</h2>
+    <div class="flow-container">
+      <div class="flow-steps">
+        <div class="flow-step step-login">
+          <div class="flow-step-num">1</div>
+          <div class="flow-step-title">用户登录</div>
+          <div class="flow-step-desc">POST /api/auth/login<br>发送用户名 + 密码</div>
+        </div>
+        <div class="flow-arrow-container">→</div>
+        <div class="flow-step step-verify">
+          <div class="flow-step-num">2</div>
+          <div class="flow-step-title">Spring Security 验证</div>
+          <div class="flow-step-desc">AuthenticationManager<br>校验用户名密码</div>
+        </div>
+        <div class="flow-arrow-container">→</div>
+        <div class="flow-step step-jwt">
+          <div class="flow-step-num">3</div>
+          <div class="flow-step-title">签发 JWT</div>
+          <div class="flow-step-desc">JwtTokenUtil 生成<br>含 sub / auth / role</div>
+        </div>
+        <div class="flow-arrow-container">→</div>
+        <div class="flow-step step-redis">
+          <div class="flow-step-num">4</div>
+          <div class="flow-step-title">Redis 存在线态</div>
+          <div class="flow-step-desc">setUserOnline<br>TTL 24小时</div>
+        </div>
+        <div class="flow-arrow-container">→</div>
+        <div class="flow-step step-access">
+          <div class="flow-step-num">5</div>
+          <div class="flow-step-title">前端存 Token</div>
+          <div class="flow-step-desc">localStorage 存储<br>Pinia 管理状态</div>
+        </div>
+      </div>
+      <div class="jwt-detail">
+        <div class="card">
+          <div style="margin-bottom:10px"><span class="tag tag-yellow">JWT Token 结构</span></div>
+          <pre style="font-size:0.78rem"><span class="cm">// Header.Payload.Signature</span>
+{
+  <span class="str">"sub"</span>: <span class="str">"admin"</span>,      <span class="cm">// 用户名</span>
+  <span class="str">"auth"</span>: <span class="str">"ROLE_USER"</span>, <span class="cm">// Spring Security</span>
+  <span class="str">"role"</span>: <span class="str">"ADMIN"</span>,     <span class="cm">// 业务角色</span>
+  <span class="str">"iat"</span>: <span class="num">1718251200</span>,   <span class="cm">// 签发时间</span>
+  <span class="str">"exp"</span>: <span class="num">1718337600</span>    <span class="cm">// 过期时间</span>
+}</pre>
+        </div>
+        <div class="card">
+          <div style="margin-bottom:10px"><span class="tag tag-blue">前端请求携带 Token</span></div>
+          <pre style="font-size:0.78rem"><span class="cm">// Axios 请求拦截器自动注入</span>
+<span class="kw">const</span> token = <span class="fn">getToken</span>()
+<span class="kw">if</span> (token) {
+  config.headers.<span class="fn">set</span>(
+    <span class="str">'Authorization'</span>,
+    <span class="str">`Bearer ${token}`</span>
+  )
+}
+
+<span class="cm">// Token 过期自动刷新（401）</span>
+<span class="cm">// 刷新中的请求进入等待队列</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 6：Axios 封装详解                                       -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-6">
+    <h2>📡 Axios 封装 — 请求 / 响应拦截器</h2>
+    <div class="code-layout">
+      <div>
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px">
+          <span class="tag tag-green">请求拦截器</span>
+          <span style="font-size:0.8rem;color:rgba(255,255,255,0.5)">src/api/request.ts</span>
+        </div>
+        <pre><span class="cm">// 每次请求自动注入 Token</span>
+service.interceptors.request.<span class="fn">use</span>(
+  (config) => {
+    <span class="kw">const</span> token = <span class="fn">getToken</span>()
+    <span class="kw">if</span> (token) {
+      config.headers.<span class="fn">set</span>(
+        <span class="str">'Authorization'</span>,
+        <span class="fn">getAuthHeader</span>()  <span class="cm">// Bearer xxx</span>
+      )
+    }
+    <span class="kw">return</span> config
+  }
+)</pre>
+        <div style="margin-top:14px;margin-bottom:10px">
+          <span class="tag tag-orange">统一方法封装</span>
+        </div>
+        <pre><span class="cm">// 封装 GET / POST / PUT / DELETE</span>
+<span class="kw">export function</span> <span class="fn">get</span>&lt;T&gt;(url, params?) {
+  <span class="kw">return</span> service.<span class="fn">get</span>&lt;ApiResponse&lt;T&gt;&gt;(url, {params})
+}
+<span class="kw">export function</span> <span class="fn">post</span>&lt;T&gt;(url, data?) {
+  <span class="kw">return</span> service.<span class="fn">post</span>&lt;ApiResponse&lt;T&gt;&gt;(url, data)
+}</pre>
+      </div>
+      <div>
+        <div style="margin-bottom:10px"><span class="tag tag-purple">响应拦截器 — Token 自动刷新</span></div>
+        <pre><span class="cm">// 401：Token 过期处理</span>
+<span class="kw">if</span> (status === <span class="num">401</span> && !_isRetry) {
+  <span class="kw">if</span> (isRefreshing) {
+    <span class="cm">// 加入等待队列</span>
+    <span class="kw">return new</span> <span class="cls">Promise</span>((resolve) => {
+      requestsQueue.<span class="fn">push</span>((token) => {
+        originalRequest.headers
+          .Authorization = <span class="str">`Bearer ${token}`</span>
+        <span class="fn">resolve</span>(<span class="fn">service</span>(originalRequest))
+      })
+    })
+  }
+  isRefreshing = <span class="kw">true</span>
+  <span class="cm">// 调用刷新接口获取新 Token</span>
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">refreshTokenApi</span>(tok)
+  <span class="fn">processQueue</span>(res.data.token)
+  <span class="cm">// 重试原请求</span>
+  <span class="kw">return</span> <span class="fn">service</span>(originalRequest)
+}</pre>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="tag tag-green">✅ 无感刷新 Token</span>
+          <span class="tag tag-blue">✅ 并发请求排队</span>
+          <span class="tag tag-purple">✅ 自动跳转登录页</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 7：路由守卫与权限控制                                   -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-7">
+    <h2>🔀 路由守卫 — 前端权限控制</h2>
+    <div class="guard-layout">
+      <div class="guard-flow">
+        <div class="guard-node gn-entry">
+          <span class="guard-node-icon">🌐</span>
+          <div class="guard-node-text">
+            <div class="guard-node-label">用户访问路由</div>
+            <div class="guard-node-desc">router.beforeEach() 触发</div>
+          </div>
+        </div>
+        <div class="guard-arrow-down">↓</div>
+        <div class="guard-node gn-auth">
+          <span class="guard-node-icon">🔍</span>
+          <div class="guard-node-text">
+            <div class="guard-node-label">是否需要认证？</div>
+            <div class="guard-node-desc">meta.requiresAuth 检查 Token 是否存在</div>
+          </div>
+        </div>
+        <div class="guard-arrow-down">↓</div>
+        <div class="guard-node gn-admin">
+          <span class="guard-node-icon">👑</span>
+          <div class="guard-node-text">
+            <div class="guard-node-label">需要 Admin 角色？</div>
+            <div class="guard-node-desc">meta.requiresAdmin → isAdmin() 验证</div>
+          </div>
+        </div>
+        <div class="guard-arrow-down">↓</div>
+        <div class="guard-node gn-perm">
+          <span class="guard-node-icon">🔐</span>
+          <div class="guard-node-text">
+            <div class="guard-node-label">页面权限检查</div>
+            <div class="guard-node-desc">meta.pagePermission → getStoredPermissions()</div>
+          </div>
+        </div>
+        <div class="guard-arrow-down">↓</div>
+        <div class="guard-node gn-ok">
+          <span class="guard-node-icon">✅</span>
+          <div class="guard-node-text">
+            <div class="guard-node-label">放行 → next()</div>
+            <div class="guard-node-desc">进入目标页面</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="margin-bottom:12px"><span class="tag tag-purple">路由配置示例</span></div>
+        <pre style="font-size:0.79rem">{
+  path: <span class="str">'/page4'</span>,
+  name: <span class="str">'Page4'</span>,
+  component: () => <span class="fn">import</span>(
+    <span class="str">'../views/Page4.vue'</span>  <span class="cm">// 懒加载</span>
+  ),
+  meta: {
+    requiresAuth: <span class="kw">true</span>,       <span class="cm">// 需要登录</span>
+    pagePermission: <span class="str">'page4'</span>, <span class="cm">// 需要页面权限</span>
+    title: <span class="str">'工装申请管理'</span>
+  }
+},
+{
+  path: <span class="str">'/users'</span>,
+  meta: {
+    requiresAuth: <span class="kw">true</span>,
+    requiresAdmin: <span class="kw">true</span>,  <span class="cm">// 仅 ADMIN</span>
+    title: <span class="str">'用户管理'</span>
+  }
+}</pre>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="tag tag-green">路由懒加载</span>
+          <span class="tag tag-blue">3级权限控制</span>
+          <span class="tag tag-orange">自动设置页面标题</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 8：目录结构对比                                         -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-8">
+    <h2>📁 工程目录结构</h2>
+    <div class="dir-layout">
+      <div class="card">
+        <div style="margin-bottom:12px;font-size:1rem;font-weight:700;color:#818cf8">🎨 前端 vue-app/</div>
+        <div class="dir-tree">
+          <div>📁 <span class="folder">src/</span></div>
+          <div>&nbsp;&nbsp;├─ 📁 <span class="folder">api/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">接口请求层</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;├─ <span class="highlight">request.ts</span> <span class="comment">Axios实例+拦截器</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;├─ <span class="file">auth.ts</span> &nbsp;<span class="comment">认证相关接口</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;├─ <span class="file">components.ts</span> <span class="comment">工装接口</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;└─ <span class="file">user.ts</span> &nbsp;<span class="comment">用户接口</span></div>
+          <div>&nbsp;&nbsp;├─ 📁 <span class="folder">views/</span> &nbsp;&nbsp;<span class="comment">页面组件</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;├─ <span class="file">Login.vue</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;├─ <span class="highlight">Page4.vue</span> <span class="comment">工装申请管理</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;└─ <span class="file">UserManage.vue</span></div>
+          <div>&nbsp;&nbsp;├─ 📁 <span class="folder">stores/</span> &nbsp;&nbsp;<span class="comment">Pinia 状态</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;└─ <span class="highlight">auth.ts</span> &nbsp;<span class="comment">Token + 用户信息</span></div>
+          <div>&nbsp;&nbsp;├─ 📁 <span class="folder">router/</span> &nbsp;&nbsp;<span class="comment">路由 + 守卫</span></div>
+          <div>&nbsp;&nbsp;└─ 📁 <span class="folder">utils/</span> &nbsp;&nbsp;&nbsp;<span class="comment">工具函数</span></div>
+          <div>📄 <span class="file">vite.config.ts</span> <span class="comment">构建配置</span></div>
+          <div>📄 <span class="file">.env</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">API 地址配置</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="margin-bottom:12px;font-size:1rem;font-weight:700;color:#34d399">🖥️ 后端 my-vue/src/main/java/</div>
+        <div class="dir-tree">
+          <div>📁 <span class="folder">com.mjw.vueback.demos.web/</span></div>
+          <div>&nbsp;&nbsp;├─ 📁 <span class="folder">controller/</span> &nbsp;<span class="comment">REST 接口层</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;├─ <span class="highlight">AuthController</span> &nbsp;<span class="comment">登录/登出</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;├─ <span class="file">ComponentsController</span> <span class="comment">工装</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;└─ <span class="file">UserController</span> &nbsp;<span class="comment">用户管理</span></div>
+          <div>&nbsp;&nbsp;├─ 📁 <span class="folder">service/</span> &nbsp;&nbsp;&nbsp;<span class="comment">业务逻辑层</span></div>
+          <div>&nbsp;&nbsp;├─ 📁 <span class="folder">mapper/</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">MyBatis Mapper</span></div>
+          <div>&nbsp;&nbsp;├─ 📁 <span class="folder">entity/</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">实体类</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;└─ <span class="file">SysUser</span> <span class="comment">/ TComponents 等</span></div>
+          <div>&nbsp;&nbsp;├─ 📁 <span class="folder">security/</span> &nbsp;&nbsp;<span class="comment">安全配置</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;├─ <span class="highlight">JwtTokenUtil</span> <span class="comment">Token 签发</span></div>
+          <div>&nbsp;&nbsp;│&nbsp;&nbsp;└─ <span class="file">SecurityConfig</span></div>
+          <div>&nbsp;&nbsp;├─ 📁 <span class="folder">config/</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">CORS / Redis 等配置</span></div>
+          <div>&nbsp;&nbsp;└─ 📁 <span class="folder">common/</span> &nbsp;&nbsp;&nbsp;<span class="comment">ApiResponse 统一返回</span></div>
+          <div>📄 <span class="file">pom.xml</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">Maven 依赖</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 9：API 接口规范                                         -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-9">
+    <h2>🔌 后端 API 接口规范</h2>
+    <div class="api-layout">
+      <div>
+        <div style="margin-bottom:12px"><span class="tag tag-blue">认证 &amp; 用户接口</span></div>
+        <table class="api-table">
+          <thead>
+            <tr><th>方法</th><th>接口路径</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="method post">POST</span></td><td><code>/api/auth/login</code></td><td>用户登录</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code>/api/auth/logout</code></td><td>退出登录</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code>/api/auth/refresh</code></td><td>刷新Token</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code>/api/auth/me</code></td><td>当前用户信息</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code>/api/user/list</code></td><td>用户列表</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code>/api/user/register</code></td><td>注册用户</td></tr>
+            <tr><td><span class="method put">PUT</span></td><td><code>/api/user/{id}</code></td><td>修改用户</td></tr>
+            <tr><td><span class="method del">DELETE</span></td><td><code>/api/user/{id}</code></td><td>删除用户</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div style="margin-bottom:12px"><span class="tag tag-green">工装业务接口</span></div>
+        <table class="api-table">
+          <thead>
+            <tr><th>方法</th><th>接口路径</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="method get">GET</span></td><td><code>/api/components/list</code></td><td>工装申请列表</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code>/api/components/create</code></td><td>创建申请</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code>/api/components/commit</code></td><td>提交申请</td></tr>
+            <tr><td><span class="method put">PUT</span></td><td><code>/api/components/update</code></td><td>更新申请</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:16px"><span class="tag tag-purple">统一响应格式</span></div>
+        <pre style="margin-top:10px;font-size:0.78rem">{
+  <span class="str">"code"</span>: <span class="num">200</span>,
+  <span class="str">"message"</span>: <span class="str">"success"</span>,
+  <span class="str">"data"</span>: { ... }    <span class="cm">// 业务数据</span>
+}</pre>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="tag tag-orange">CORS 已配置允许 5173 端口</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 10：总结与优势                                          -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-10">
+    <h2>🚀 前后端分离的核心价值</h2>
+    <div class="summary-grid">
+      <div class="summary-card sc1">
+        <div class="summary-icon">⚡</div>
+        <div class="summary-title">开发效率提升</div>
+        <div class="summary-desc">前后端并行开发<br>Vue DevServer + 后端独立启动<br>互不阻塞</div>
+      </div>
+      <div class="summary-card sc2">
+        <div class="summary-icon">🔒</div>
+        <div class="summary-title">安全认证体系</div>
+        <div class="summary-desc">JWT 无状态 Token<br>Redis 在线状态管理<br>自动刷新 + 黑名单</div>
+      </div>
+      <div class="summary-card sc3">
+        <div class="summary-icon">🎯</div>
+        <div class="summary-title">职责清晰</div>
+        <div class="summary-desc">前端管 UI & 交互<br>后端管数据 & 逻辑<br>接口文档对接</div>
+      </div>
+      <div class="summary-card sc4">
+        <div class="summary-icon">📱</div>
+        <div class="summary-title">多端复用</div>
+        <div class="summary-desc">同一套 REST API<br>Web / APP / 小程序<br>均可对接使用</div>
+      </div>
+      <div class="summary-card sc5">
+        <div class="summary-icon">🐳</div>
+        <div class="summary-title">独立部署</div>
+        <div class="summary-desc">Docker + docker-compose<br>前后端容器化独立部署<br>弹性扩容</div>
+      </div>
+      <div class="summary-card sc6">
+        <div class="summary-icon">🛡️</div>
+        <div class="summary-title">权限分层</div>
+        <div class="summary-desc">前端路由守卫三级校验<br>后端 Spring Security<br>双重保障</div>
+      </div>
+    </div>
+    <div class="final-quote">
+      本项目将「工装管理系统」从 <strong>前后端一体（HTML + MiniUI）</strong> 渐进式迁移到 <strong>前后端分离（Vue 3 + Spring Boot）</strong>：<br>
+      <strong>单一工程 → 独立工程 · MiniUI DOM → Vue 组件 · 全量刷新 → SPA · 紧耦合 → JSON API</strong>
+    </div>
+  </div>
+
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 11：MiniUI vs Vue 3 代码对比                            -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-11">
+    <h2>⚡ 代码对比：MiniUI DOM 操作 → Vue 3 组件化</h2>
+    <div class="code-layout" style="max-width:1050px">
+      <div>
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span class="tag tag-red">旧版 MiniUI 写法（jQuery + DOM）</span>
+        </div>
+        <pre style="font-size:0.75rem"><span class="cm">&lt;!-- HTML：表单数据绑定靠 ID --&gt;</span>
+&lt;input id=<span class="str">"componentName"</span> class=<span class="str">"mini-textbox"</span>/&gt;
+&lt;select id=<span class="str">"deptSelect"</span> class=<span class="str">"mini-combobox"</span>/&gt;
+
+<span class="cm">// JS：手动 DOM 操作获取数据</span>
+<span class="kw">var</span> form = <span class="kw">new</span> mini.<span class="fn">Form</span>(<span class="str">"#form1"</span>);
+<span class="kw">var</span> data = form.<span class="fn">getData</span>();
+<span class="cm">// 提交 AJAX 请求</span>
+$.<span class="fn">ajax</span>({
+  url: <span class="str">"/components/save"</span>,
+  data: <span class="fn">mini.encode</span>(data),
+  success: <span class="kw">function</span>(res) { ... }
+});
+<span class="cm">// 表格渲染靠 mini.DataGrid</span>
+grid.<span class="fn">load</span>({ pageIndex: <span class="num">1</span> });
+<span class="cm">// 页面跳转全量刷新</span>
+window.location.href = <span class="str">"/page2.html"</span>;</pre>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="tag tag-red">ID 绑定</span>
+          <span class="tag tag-red">DOM 操作</span>
+          <span class="tag tag-red">jQuery $</span>
+          <span class="tag tag-red">全量刷新</span>
+        </div>
+      </div>
+      <div>
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span class="tag tag-green">新版 Vue 3 写法（响应式 + 组件化）</span>
+        </div>
+        <pre style="font-size:0.75rem"><span class="cm">&lt;!-- Vue SFC：数据双向绑定 --&gt;</span>
+&lt;el-input <span class="kw">v-model</span>=<span class="str">"form.componentName"</span>/&gt;
+&lt;el-select <span class="kw">v-model</span>=<span class="str">"form.deptId"</span>/&gt;
+
+<span class="cm">// 响应式数据，修改自动更新视图</span>
+<span class="kw">const</span> form = <span class="fn">reactive</span>({ componentName: <span class="str">''</span> })
+<span class="cm">// Axios 异步请求</span>
+<span class="kw">await</span> <span class="fn">post</span>(<span class="str">'/components/create'</span>, { data: form })
+<span class="cm">// Element Plus 表格组件</span>
+&lt;el-table :data=<span class="str">"tableData"</span> /&gt;
+<span class="cm">// Vue Router 无刷新切换</span>
+router.<span class="fn">push</span>(<span class="str">'/page4'</span>)</pre>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="tag tag-green">v-model</span>
+          <span class="tag tag-green">响应式</span>
+          <span class="tag tag-green">组件</span>
+          <span class="tag tag-green">SPA</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 12：Vue SFC 单文件组件详解                               -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-12">
+    <h2>🧩 Vue 3 SFC — 单文件组件结构</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;width:100%;max-width:1050px">
+      <div class="card" style="border-color:rgba(96,165,250,0.3)">
+        <div style="font-weight:700;color:#60a5fa;margin-bottom:12px;font-size:1rem">📝 &lt;template&gt; 模板</div>
+        <pre style="font-size:0.75rem;min-height:200px"><span class="cm">&lt;!-- 声明式渲染 --&gt;</span>
+&lt;<span class="kw">template</span>&gt;
+  &lt;<span class="fn">el-form</span> <span class="str">:model</span>=<span class="str">"form"</span>&gt;
+    &lt;<span class="fn">el-input</span>
+      <span class="kw">v-model</span>=<span class="str">"form.name"</span>
+      <span class="str">placeholder</span>=<span class="str">"组件名称"</span>
+    /&gt;
+    &lt;<span class="fn">el-button</span>
+      <span class="str">type</span>=<span class="str">"primary"</span>
+      <span class="str">@click</span>=<span class="str">"handleSubmit"</span>&gt;
+      提交
+    &lt;/<span class="fn">el-button</span>&gt;
+  &lt;/<span class="fn">el-form</span>&gt;
+&lt;/<span class="kw">template</span>&gt;</pre>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px">声明式 HTML，v-model 双向绑定<br>@click 事件绑定，:prop 动态属性</div>
+      </div>
+      <div class="card" style="border-color:rgba(52,211,153,0.3)">
+        <div style="font-weight:700;color:#34d399;margin-bottom:12px;font-size:1rem">⚙️ &lt;script&gt; 逻辑</div>
+        <pre style="font-size:0.75rem;min-height:200px"><span class="cm">// &lt;script setup lang="ts"&gt;</span>
+<span class="kw">import</span> { ref, reactive } <span class="kw">from</span> <span class="str">'vue'</span>
+<span class="kw">import</span> { <span class="fn">post</span> } <span class="kw">from</span> <span class="str">'@/api/request'</span>
+
+<span class="kw">const</span> form = <span class="fn">reactive</span>({
+  name: <span class="str">''</span>,
+  deptId: <span class="num">null</span>
+})
+
+<span class="kw">const</span> loading = <span class="fn">ref</span>(<span class="kw">false</span>)
+
+<span class="kw">async function</span> <span class="fn">handleSubmit</span>() {
+  loading.<span class="kw">value</span> = <span class="kw">true</span>
+  <span class="kw">await</span> <span class="fn">post</span>(<span class="str">'/components/create'</span>, {
+    data: { ...form }
+  })
+  loading.<span class="kw">value</span> = <span class="kw">false</span>
+}</pre>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px">reactive() / ref() 响应式<br>async/await 异步操作</div>
+      </div>
+      <div class="card" style="border-color:rgba(167,139,250,0.3)">
+        <div style="font-weight:700;color:#a78bfa;margin-bottom:12px;font-size:1rem">🎨 &lt;style&gt; 样式</div>
+        <pre style="font-size:0.75rem;min-height:200px"><span class="cm">&lt;!-- scoped：局部作用域 --&gt;</span>
+&lt;<span class="kw">style</span> <span class="str">scoped</span> <span class="kw">lang</span>=<span class="str">"scss"</span>&gt;
+<span class="cls">.page-container</span> {
+  <span class="kw">padding</span>: <span class="num">20</span><span class="kw">px</span>;
+}
+
+<span class="cls">.card</span> {
+  <span class="kw">border-radius</span>: <span class="num">12</span><span class="kw">px</span>;
+  <span class="kw">background</span>: <span class="str">#ffffff</span>;
+  <span class="kw">box-shadow</span>: <span class="num">0</span> <span class="num">2</span><span class="kw">px</span> <span class="num">12</span><span class="kw">px</span> <span class="fn">rgba</span>(<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0.08</span>);
+  <span class="kw">transition</span>: <span class="kw">all</span> <span class="num">0.3</span><span class="kw">s</span>;
+}
+
+<span class="cls">.card</span>:<span class="kw">hover</span> {
+  <span class="kw">transform</span>: <span class="fn">translateY</span>(-<span class="num">2</span><span class="kw">px</span>);
+}
+&lt;/<span class="kw">style</span>&gt;</pre>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px">scoped 自动 CSS Modules<br>支持 SCSS/Less 预处理器</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 13：Pinia 状态管理详解                                   -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-13">
+    <h2>🍍 Pinia 状态管理 — Auth Store 剖析</h2>
+    <div class="code-layout" style="max-width:1050px">
+      <div>
+        <div style="margin-bottom:10px"><span class="tag tag-yellow">Setup Store 语法（Composition API）</span></div>
+        <pre style="font-size:0.75rem"><span class="kw">export const</span> useAuthStore = <span class="fn">defineStore</span>(<span class="str">'auth'</span>, () => {
+  <span class="cm">// ===== 响应式状态（类似 data） =====</span>
+  <span class="kw">const</span> token = <span class="fn">ref</span>&lt;<span class="kw">string</span> | <span class="kw">null</span>&gt;(<span class="fn">getToken</span>())
+  <span class="kw">const</span> isLoggedIn = <span class="fn">ref</span>(<span class="fn">isAuthenticated</span>())
+  <span class="kw">const</span> isAdminUser = <span class="fn">ref</span>(<span class="fn">checkIsAdmin</span>())
+  <span class="kw">const</span> currentUsername = <span class="fn">ref</span>(<span class="str">''</span>)
+
+  <span class="cm">// ===== 计算属性 =====</span>
+  <span class="kw">const</span> authHeader = <span class="fn">computed</span>(() =>
+    token.value ? <span class="str">`Bearer ${token.value}`</span> : <span class="kw">null</span>
+  )
+
+  <span class="cm">// ===== 方法 =====</span>
+  <span class="kw">async function</span> <span class="fn">login</span>(params) { ... }
+  <span class="kw">async function</span> <span class="fn">logout</span>() { ... }
+  <span class="kw">function</span> <span class="fn">hasPerm</span>(key) { ... }
+
+  <span class="kw">return</span> { token, isLoggedIn, isAdminUser,
+           authHeader, login, logout, hasPerm }
+})</pre>
+      </div>
+      <div>
+        <div style="margin-bottom:10px"><span class="tag tag-blue">组件中使用</span></div>
+        <pre style="font-size:0.75rem"><span class="cm">// 在任何 .vue 组件中直接访问</span>
+<span class="kw">import</span> { useAuthStore } <span class="kw">from</span> <span class="str">'@/stores/auth'</span>
+
+<span class="kw">const</span> auth = <span class="fn">useAuthStore</span>()
+
+<span class="cm">// 读取状态（自动响应式）</span>
+auth.isLoggedIn        <span class="cm">// 是否登录</span>
+auth.isAdminUser        <span class="cm">// 是否管理员</span>
+auth.currentUsername    <span class="cm">// 当前用户名</span>
+
+<span class="cm">// 调用方法</span>
+<span class="kw">await</span> auth.<span class="fn">login</span>({ username, password })
+<span class="kw">await</span> auth.<span class="fn">logout</span>()
+auth.<span class="fn">hasPerm</span>(<span class="str">'page4'</span>)       <span class="cm">// 检查权限</span></pre>
+        <div style="margin-top:14px">
+          <div style="margin-bottom:8px"><span class="tag tag-purple">Pinia 核心优势</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:rgba(255,255,255,0.8)">
+              <span style="color:#34d399">✅</span> 组合式 API，与 Vue 3 写法完全一致
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:rgba(255,255,255,0.8)">
+              <span style="color:#34d399">✅</span> 完整的 TypeScript 类型推断
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:rgba(255,255,255,0.8)">
+              <span style="color:#34d399">✅</span> DevTools 支持，热更新友善
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:rgba(255,255,255,0.8)">
+              <span style="color:#34d399">✅</span> 无 mutations，直接修改状态
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 14：Spring Boot Controller 设计                          -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-14">
+    <h2>🖥️ Spring Boot Controller — RESTful API 设计</h2>
+    <div class="code-layout" style="max-width:1050px">
+      <div>
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span class="tag tag-green">AuthController — 认证接口</span>
+          <span style="font-size:0.78rem;color:rgba(255,255,255,0.45)">@RestController</span>
+        </div>
+        <pre style="font-size:0.75rem"><span class="kw">@RestController</span>
+<span class="kw">@RequestMapping</span>(<span class="str">"/api/auth"</span>)
+<span class="kw">public class</span> <span class="cls">AuthController</span> {
+
+  <span class="kw">@Autowired private</span> AuthService authService;
+
+  <span class="cm">// 登录 → 返回 JWT Token</span>
+  <span class="kw">@PostMapping</span>(<span class="str">"/login"</span>)
+  <span class="kw">public</span> Map&lt;String, Object&gt; <span class="fn">login</span>(
+    <span class="kw">@RequestBody</span> Map&lt;String, String&gt; body
+  ) {
+    <span class="kw">return</span> authService.<span class="fn">login</span>(
+      body.<span class="fn">get</span>(<span class="str">"username"</span>),
+      body.<span class="fn">get</span>(<span class="str">"password"</span>)
+    );
+  }
+
+  <span class="cm">// 登出 → 清除 Redis 在线状态</span>
+  <span class="kw">@PostMapping</span>(<span class="str">"/logout"</span>)
+  <span class="kw">public</span> Map&lt;String, Object&gt; <span class="fn">logout</span>() {
+    <span class="kw">return</span> authService.<span class="fn">logout</span>();
+  }
+}</pre>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="tag tag-blue">@RestController = @Controller + @ResponseBody</span>
+          <span class="tag tag-orange">直接返回 Map（不用 ResultDto）</span>
+        </div>
+      </div>
+      <div>
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span class="tag tag-purple">分层架构</span>
+          <span style="font-size:0.78rem;color:rgba(255,255,255,0.45)">Controller → Service → Mapper</span>
+        </div>
+        <pre style="font-size:0.75rem;min-height:250px"><span class="cm">// Controller：接收请求，调用 Service</span>
+<span class="kw">@Autowired private</span> ComponentsService service;
+
+<span class="kw">@GetMapping</span>(<span class="str">"/list"</span>)
+<span class="kw">public</span> Map&lt;String, Object&gt; <span class="fn">list</span>(
+    <span class="kw">@RequestParam</span> <span class="kw">int</span> page,
+    <span class="kw">@RequestParam</span> <span class="kw">int</span> pageSize) {
+  <span class="kw">return</span> service.<span class="fn">getList</span>(page, pageSize);
+}
+
+<span class="cm">// Service：业务逻辑 + 事务</span>
+<span class="kw">@Service</span>
+<span class="kw">public class</span> <span class="cls">ComponentsService</span> {
+  <span class="kw">@Autowired private</span> ComponentsMapper mapper;
+
+  <span class="kw">public</span> Map <span class="fn">getList</span>(<span class="kw">int</span> page, <span class="kw">int</span> size) {
+    <span class="cm">// PageHelper 分页 + 调用 Mapper</span>
+    PageHelper.<span class="fn">startPage</span>(page, size);
+    List list = mapper.<span class="fn">selectAll</span>();
+    <span class="kw">return</span> <span class="fn">buildPageResult</span>(list);
+  }
+}</pre>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px">清晰的 MVC 分层：Controller → Service → Mapper → DB</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 15：MyBatis Mapper 与数据库表关系                        -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-15">
+    <h2>🗃️ MyBatis 持久层 — Entity / Mapper / 数据库表</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;width:100%;max-width:1050px">
+      <div class="card" style="border-color:rgba(251,146,60,0.3)">
+        <div style="font-weight:700;color:#fb923c;margin-bottom:10px;font-size:0.95rem">📦 Entity（实体类）</div>
+        <pre style="font-size:0.73rem;min-height:200px"><span class="cm">// T_COMPONENTS 表实体</span>
+<span class="kw">public class</span> <span class="cls">TComponents</span> {
+  <span class="kw">private</span> String guid;        <span class="cm">// 主键</span>
+  <span class="kw">private</span> String compName;    <span class="cm">// 组件名称</span>
+  <span class="kw">private</span> String maStatus;    <span class="cm">// 审批状态</span>
+  <span class="kw">private</span> String deptId;      <span class="cm">// 部门ID</span>
+  <span class="kw">private</span> Date createDate;    <span class="cm">// 创建日期</span>
+  <span class="kw">private</span> String createUser;  <span class="cm">// 创建人</span>
+  <span class="cm">// ... getter / setter</span>
+}
+<span class="cm">// 核心表：T_COMPONENTS（工装主表）</span>
+<span class="cm">//       T_COMPONENTS_LINE（明细）</span>
+<span class="cm">//       T_COMPONENTS_OPINION（意见）</span></pre>
+      </div>
+      <div class="card" style="border-color:rgba(99,102,241,0.3)">
+        <div style="font-weight:700;color:#818cf8;margin-bottom:10px;font-size:0.95rem">📝 Mapper（SQL 映射）</div>
+        <pre style="font-size:0.73rem;min-height:200px"><span class="cm">&lt;!-- XML 方式：灵活 SQL --&gt;</span>
+&lt;select id=<span class="str">"selectByCondition"</span>
+    resultType=<span class="str">"TComponents"</span>&gt;
+  SELECT * FROM T_COMPONENTS
+  WHERE 1=1
+  &lt;if test=<span class="str">"compName != null"</span>&gt;
+    AND COMP_NAME LIKE <span class="fn">CONCAT</span>('%',#{compName},'%')
+  &lt;/if&gt;
+  &lt;if test=<span class="str">"maStatus != null"</span>&gt;
+    AND MA_STATUS = #{maStatus}
+  &lt;/if&gt;
+  ORDER BY CREATE_DATE DESC
+&lt;/select&gt;
+
+<span class="cm">&lt;!-- 注解方式 --&gt;</span>
+<span class="kw">@Select</span>(<span class="str">"SELECT * FROM T_COMPONENTS</span>
+<span class="str">         WHERE GUID = #{guid}"</span>)
+TComponents <span class="fn">selectByGuid</span>(String guid);</pre>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px">动态 SQL (if/foreach) + 结果映射<br>XML 编写复杂 SQL，注解写简单查询</div>
+      </div>
+      <div class="card" style="border-color:rgba(52,211,153,0.3)">
+        <div style="font-weight:700;color:#34d399;margin-bottom:10px;font-size:0.95rem">🐬 数据库表</div>
+        <pre style="font-size:0.73rem;min-height:200px"><span class="cm">-- 关联实体表</span>
+T_COMPANY          <span class="cm">-- 公司</span>
+T_DEPT             <span class="cm">-- 部门</span>
+T_PROJECT          <span class="cm">-- 项目</span>
+T_UNIT             <span class="cm">-- 单位</span>
+T_COMPONENTS       <span class="cm">-- 工装主表</span>
+T_COMPONENTS_LINE  <span class="cm">-- 工装行项目</span>
+T_COMPONENTS_OPINION<span class="cm">-- 审批意见</span>
+sys_user           <span class="cm">-- 用户（status/role）</span>
+
+<span class="cm">-- 一对多关联</span>
+T_COMPONENTS        <span class="cm">1 ── N</span> T_COMPONENTS_LINE
+T_COMPONENTS        <span class="cm">1 ── N</span> T_COMPONENTS_OPINION
+sys_user           <span class="cm">N ── 1</span> T_DEPT</pre>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:6px">工装主表 → 明细表一对多<br>用户表关联部门表</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 16：CORS 跨域与前后端通信                                 -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-16">
+    <h2>🌐 CORS 跨域 — 前后端分离的关键配置</h2>
+    <div class="code-layout" style="max-width:1050px">
+      <div>
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span class="tag tag-orange">为什么需要 CORS？</span>
+        </div>
+        <div style="font-size:0.88rem;color:rgba(255,255,255,0.78);line-height:1.8;margin-bottom:14px">
+          浏览器<strong>同源策略</strong>要求协议 + 域名 + 端口完全一致。前端跑在 <code>localhost:5173</code>，后端在 <code>localhost:8082</code>，属于<strong>不同源</strong>，浏览器会拦截请求。
+        </div>
+        <div class="arch-row" style="justify-content:space-around;flex-wrap:wrap">
+          <div class="arch-box" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);min-width:100px">
+            <div class="arch-title">前端</div>
+            <div class="arch-name">🌐 Vue 3</div>
+            <div class="arch-sub">localhost:5173</div>
+          </div>
+          <div class="arch-arrow" style="font-size:1rem">⛔ CORS 拦截</div>
+          <div class="arch-box" style="background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);min-width:100px">
+            <div class="arch-title">浏览器</div>
+            <div class="arch-name">🔒 同源策略</div>
+            <div class="arch-sub">阻止跨域请求</div>
+          </div>
+          <div class="arch-arrow" style="font-size:1rem">→</div>
+          <div class="arch-box" style="background:rgba(52,211,153,0.15);border-color:rgba(52,211,153,0.4);min-width:100px">
+            <div class="arch-title">后端</div>
+            <div class="arch-name">🖥️ Spring Boot</div>
+            <div class="arch-sub">localhost:8082</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span class="tag tag-green">如何解决？</span>
+        </div>
+        <pre style="font-size:0.75rem"><span class="cm">// Spring Boot CORS 配置</span>
+<span class="kw">@Configuration</span>
+<span class="kw">public class</span> <span class="cls">CorsConfig</span> <span class="kw">implements</span> WebMvcConfigurer {
+  <span class="kw">@Override</span>
+  <span class="kw">public void</span> <span class="fn">addCorsMappings</span>(CorsRegistry r) {
+    r.<span class="fn">addMapping</span>(<span class="str">"/api/**"</span>)
+     .<span class="fn">allowedOrigins</span>(<span class="str">"http://localhost:5173"</span>)
+     .<span class="fn">allowedMethods</span>(<span class="str">"GET"</span>,<span class="str">"POST"</span>,<span class="str">"PUT"</span>,<span class="str">"DELETE"</span>)
+     .<span class="fn">allowedHeaders</span>(<span class="str">"*"</span>)
+     .<span class="fn">allowCredentials</span>(<span class="kw">true</span>);
+  }
+}</pre>
+        <div style="margin-top:10px;margin-bottom:10px">
+          <span class="tag tag-blue">两种跨域方案对比</span>
+        </div>
+        <table style="width:100%;font-size:0.78rem;color:rgba(255,255,255,0.82)">
+          <tr style="background:rgba(255,255,255,0.06)">
+            <td style="padding:6px 8px;font-weight:600;color:#34d399">开发环境</td>
+            <td style="padding:6px 8px">Vite Proxy 代理 /api → localhost:8082</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px;font-weight:600;color:#34d399">生产环境</td>
+            <td style="padding:6px 8px">Nginx 反向代理 / 或 CORS 直接放行</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 17：环境变量与多环境配置                                  -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-17">
+    <h2>🔧 多环境配置管理</h2>
+    <div class="code-layout" style="max-width:1050px">
+      <div>
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span class="tag tag-blue">前端 .env 文件</span>
+          <span style="font-size:0.78rem;color:rgba(255,255,255,0.45)">vue-app/</span>
+        </div>
+        <pre style="font-size:0.75rem"><span class="cm">// .env.development — 开发环境</span>
+VITE_API_BASE_URL=/api         <span class="cm"># Vite Proxy 代理</span>
+VITE_PORT=5173                 <span class="cm"># DevServer 端口</span>
+
+<span class="cm">// .env.production — 生产环境</span>
+VITE_API_BASE_URL=/api         <span class="cm"># Nginx 反向代理</span>
+
+<span class="cm">// vite.config.ts 读取环境变量</span>
+<span class="kw">export default</span> <span class="fn">defineConfig</span>(({ mode }) => {
+  <span class="kw">const</span> env = <span class="fn">loadEnv</span>(mode, process.<span class="fn">cwd</span>())
+  <span class="kw">return</span> {
+    server: {
+      port: <span class="fn">Number</span>(env.VITE_PORT) || <span class="num">5173</span>,
+      proxy: { <span class="str">'/api'</span>: { target: <span class="str">'http://localhost:8081'</span> } }
+    }
+  }
+})</pre>
+        <div style="font-size:0.78rem;color:rgba(255,255,255,0.55);margin-top:6px">
+          ⚡ 构建时通过 <code>--mode development</code> 自动切换<br>
+          使用 <code>import.meta.env.VITE_XXX</code> 在代码中读取
+        </div>
+      </div>
+      <div>
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span class="tag tag-green">后端 application.yml</span>
+          <span style="font-size:0.78rem;color:rgba(255,255,255,0.45)">my-vue/</span>
+        </div>
+        <pre style="font-size:0.75rem"><span class="cm"># application.yml — 默认配置</span>
+server:
+  port: 8082
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/vue_back
+    username: mjw001
+    password: 123456
+  redis:
+    host: localhost
+    port: 6379
+
+<span class="cm"># 可通过环境变量覆盖（Docker）</span>
+<span class="cm"># -Dspring.datasource.url=jdbc:mysql://...</span>
+
+<span class="cm"># docker-compose.yml 中覆盖</span>
+environment:
+  - spring.datasource.url=jdbc:mysql://<span class="fn">mysql</span>:3306/...
+  - spring.redis.host=<span class="fn">redis</span></pre>
+        <div style="font-size:0.78rem;color:rgba(255,255,255,0.55);margin-top:6px">
+          🐳 Docker 部署时通过环境变量覆盖<br>
+          Spring Boot 外部化配置天然支持
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="tag tag-orange">开发：application.yml 直连本地</span>
+          <span class="tag tag-purple">Docker：环境变量覆盖容器地址</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 18：Docker 容器化部署                                    -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-18">
+    <h2>🐳 Docker Compose — 一键部署三服务</h2>
+    <div style="width:100%;max-width:960px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px">
+        <div class="card" style="border-color:rgba(59,130,246,0.3);text-align:center">
+          <div style="font-size:2rem;margin-bottom:4px">🐬</div>
+          <div style="font-weight:700;color:#60a5fa">MySQL 8.0</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.6)">3307:3306</div>
+          <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:4px">自动建表 init.sql<br>utf8mb4 字符集</div>
+        </div>
+        <div class="card" style="border-color:rgba(239,68,68,0.3);text-align:center">
+          <div style="font-size:2rem;margin-bottom:4px">🔴</div>
+          <div style="font-weight:700;color:#f87171">Redis 7</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.6)">6380:6379</div>
+          <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:4px">AOF 持久化<br>在线状态缓存</div>
+        </div>
+        <div class="card" style="border-color:rgba(16,185,129,0.3);text-align:center">
+          <div style="font-size:2rem;margin-bottom:4px">🌱</div>
+          <div style="font-weight:700;color:#34d399">Spring Boot App</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.6)">8081:8081</div>
+          <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:4px">jar 包运行<br>日志持久化</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px">
+          <span class="tag tag-green">启动流程</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:0.88rem;color:rgba(255,255,255,0.82)">
+          <div style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:10px;padding:8px 14px">
+            <code>docker compose up -d</code>
+          </div>
+          <span style="color:rgba(255,255,255,0.3)">→</span>
+          <div style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:8px 14px">
+            ② MySQL 启动<br><span style="font-size:0.72rem;opacity:0.6">healthcheck OK</span>
+          </div>
+          <span style="color:rgba(255,255,255,0.3)">→</span>
+          <div style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:8px 14px">
+            ③ Redis 启动<br><span style="font-size:0.72rem;opacity:0.6">healthcheck OK</span>
+          </div>
+          <span style="color:rgba(255,255,255,0.3)">→</span>
+          <div style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:8px 14px">
+            ④ App 启动<br><span style="font-size:0.72rem;opacity:0.6">depends_on 等待</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <span class="tag tag-blue">MySQL:3307 / Redis:6380 端口不与本地冲突</span>
+        <span class="tag tag-green">healthcheck 保证启动顺序</span>
+        <span class="tag tag-purple">环境变量覆盖连接地址</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 19：工装审批流 — maStatus 状态机                         -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-19">
+    <h2>🔄 工装审批流 — maStatus 状态机</h2>
+    <div style="width:100%;max-width:960px">
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:20px">
+        <div style="background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);border-radius:10px;padding:10px 16px;text-align:center;min-width:80px">
+          <div style="font-weight:700;color:#f87171">00</div>
+          <div style="font-size:0.7rem;color:rgba(255,255,255,0.6)">退回<br>（可编辑）</div>
+        </div>
+        <span style="color:rgba(255,255,255,0.2)">→</span>
+        <div style="background:rgba(251,146,60,0.2);border:1px solid rgba(251,146,60,0.4);border-radius:10px;padding:10px 16px;text-align:center;min-width:80px">
+          <div style="font-weight:700;color:#fb923c">01</div>
+          <div style="font-size:0.7rem;color:rgba(255,255,255,0.6)">编制<br>（可编辑）</div>
+        </div>
+        <span style="color:rgba(255,255,255,0.2)">→</span>
+        <div style="background:rgba(234,179,8,0.2);border:1px solid rgba(234,179,8,0.4);border-radius:10px;padding:10px 16px;text-align:center;min-width:80px">
+          <div style="font-weight:700;color:#fbbf24">02</div>
+          <div style="font-size:0.7rem;color:rgba(255,255,255,0.6)">审批中<br>（只读）</div>
+        </div>
+        <span style="color:rgba(255,255,255,0.2)">→</span>
+        <div style="background:rgba(96,165,250,0.2);border:1px solid rgba(96,165,250,0.4);border-radius:10px;padding:10px 16px;text-align:center;min-width:80px">
+          <div style="font-weight:700;color:#60a5fa">03</div>
+          <div style="font-size:0.7rem;color:rgba(255,255,255,0.6)">设计出图<br>（只读）</div>
+        </div>
+        <span style="color:rgba(255,255,255,0.2)">→</span>
+        <div style="background:rgba(167,139,250,0.2);border:1px solid rgba(167,139,250,0.4);border-radius:10px;padding:10px 16px;text-align:center;min-width:80px">
+          <div style="font-weight:700;color:#a78bfa">04</div>
+          <div style="font-size:0.7rem;color:rgba(255,255,255,0.6)">BPM 工作流<br>（只读）</div>
+        </div>
+        <span style="color:rgba(255,255,255,0.2)">→</span>
+        <div style="background:rgba(52,211,153,0.2);border:1px solid rgba(52,211,153,0.4);border-radius:10px;padding:10px 16px;text-align:center;min-width:80px">
+          <div style="font-weight:700;color:#34d399">05+</div>
+          <div style="font-size:0.7rem;color:rgba(255,255,255,0.6)">完成<br>（只读）</div>
+        </div>
+      </div>
+      <div class="code-layout" style="max-width:960px">
+        <div class="card" style="border-color:rgba(52,211,153,0.3)">
+          <div style="margin-bottom:8px"><span class="tag tag-green">前端权限判断</span></div>
+          <pre style="font-size:0.75rem"><span class="cm">// 只有 00/01 状态可编辑</span>
+<span class="kw">const</span> isEditable = <span class="fn">computed</span>(() => {
+  <span class="kw">const</span> s = currentItem.value?.maStatus
+  <span class="kw">return</span> s === <span class="str">'00'</span> || s === <span class="str">'01'</span>
+})
+
+<span class="cm">// 模板中使用</span>
+&lt;<span class="fn">el-button</span>
+  <span class="str">:disabled</span>=<span class="str">"!isEditable"</span>
+  <span class="str">@click</span>=<span class="str">"handleSubmit"</span>&gt;
+  提交审批
+&lt;/<span class="fn">el-button</span>&gt;</pre>
+        </div>
+        <div class="card" style="border-color:rgba(99,102,241,0.3)">
+          <div style="margin-bottom:8px"><span class="tag tag-blue">关键表关系</span></div>
+          <div style="font-size:0.82rem;color:rgba(255,255,255,0.78);line-height:1.8">
+            <div>📋 <strong>T_COMPONENTS</strong> — 工装主表（含 maStatus）</div>
+            <div>📋 <strong>T_COMPONENTS_LINE</strong> — 申请材料明细（1:N）</div>
+            <div>📋 <strong>T_COMPONENTS_OPINION</strong> — 审批意见记录（1:N）</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 幻灯片 20：渐进式迁移策略与最佳实践                               -->
+  <!-- ============================================================ -->
+  <div class="slide" id="slide-20" style="background:radial-gradient(ellipse at 30% 60%,rgba(16,185,129,0.25),transparent 60%),radial-gradient(ellipse at 70% 30%,rgba(99,102,241,0.2),transparent 60%),linear-gradient(135deg,#0f0f1a,#1a1a2e)">
+    <h2>🛤️ 渐进式迁移策略 &amp; 最佳实践总结</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:960px">
+      <div class="card" style="border-color:rgba(251,146,60,0.3)">
+        <div style="font-weight:700;color:#fb923c;margin-bottom:12px;font-size:1rem">📋 迁移策略 — 从 mo 到新工程</div>
+        <div style="font-size:0.82rem;color:rgba(255,255,255,0.78);line-height:2">
+          <div>1️⃣ <strong>先完成现有功能迁移</strong>，再迁移下个模块</div>
+          <div>2️⃣ <strong>参照原工程逻辑</strong>（mo 文件夹），不另起炉灶</div>
+          <div>3️⃣ <strong>完整代码 → 修复 → SQL → 测试</strong> 闭环</div>
+          <div>4️⃣ <strong>后端先跑通</strong>，前端再对接</div>
+          <div>5️⃣ 接口返回 <strong>字段名统一</strong>（GUID vs guid）</div>
+          <div>6️⃣ 数字字段 <strong>null → 0</strong>，保持兼容</div>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(52,211,153,0.3)">
+        <div style="font-weight:700;color:#34d399;margin-bottom:12px;font-size:1rem">✅ 最佳实践清单</div>
+        <div style="font-size:0.82rem;color:rgba(255,255,255,0.78);line-height:2">
+          <div>🔒 <strong>JWT + Redis</strong> 双层认证</div>
+          <div>🔄 <strong>Token 自动刷新</strong> + 并发请求排队</div>
+          <div>🛡️ <strong>前端 3 级权限</strong>（登录/角色/页面）</div>
+          <div>📡 <strong>Axios 统一拦截器</strong>（注入/刷新/错误）</div>
+          <div>📁 <strong>前端传参规范</strong>：<code>{data:{...}}</code></div>
+          <div>🌐 <strong>CORS + Vite Proxy</strong> 双方案</div>
+          <div>🐳 <strong>Docker Compose</strong> 三服务编排</div>
+        </div>
+      </div>
+    </div>
+    <div class="final-quote" style="margin-top:24px;max-width:800px">
+      从前端代码放在后端 <code>resources</code> 中，到独立的 <strong>vue-app</strong> 工程；<br>
+      从 <strong>MiniUI DOM 操作</strong>，到 <strong>Vue 3 响应式组件化</strong>；<br>
+      从手动 AJAX 拼接参数，到 <strong>Axios 拦截器自动注入 Token</strong>；<br>
+      这不是推倒重来，而是一次<strong>精心设计的渐进式架构升级</strong>。
+    </div>
+  </div>
+
+</div><!-- end slideshow -->
+
+<!-- 导航按钮 -->
+<button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一页</button>
+<div class="page-indicator" id="pageIndicator">1 / 10</div>
+<button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
+
+<script>
+  const TOTAL = 20;
+  let current = 1;
+
+  function changeSlide(dir) {
+    const oldSlide = document.getElementById('slide-' + current);
+    current = Math.min(Math.max(current + dir, 1), TOTAL);
+    const newSlide = document.getElementById('slide-' + current);
+
+    if (oldSlide) oldSlide.classList.remove('active');
+    if (newSlide) newSlide.classList.add('active');
+
+    // 更新进度条
+    const pct = ((current - 1) / (TOTAL - 1)) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+
+    // 更新页码
+    const numStr = String(current).padStart(2, '0');
+    document.getElementById('slideNum').textContent = numStr + ' / ' + String(TOTAL).padStart(2, '0');
+    document.getElementById('pageIndicator').textContent = current + ' / ' + TOTAL;
+
+    // 按钮可见性
+    document.getElementById('prevBtn').style.opacity = current === 1 ? '0.3' : '1';
+    document.getElementById('nextBtn').style.opacity = current === TOTAL ? '0.3' : '1';
+  }
+
+  // 键盘控制
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      changeSlide(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      changeSlide(-1);
+    }
+  });
+
+  // 初始化
+  changeSlide(0);
+</script>
+</body>
+</html>
