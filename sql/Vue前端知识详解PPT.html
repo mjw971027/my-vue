@@ -56,7 +56,7 @@
 </head>
 <body>
 <div class="bar" id="bar"></div>
-<div class="idx" id="idx">01 / 20</div>
+<div class="idx" id="idx">01 / 30</div>
 
 <div style="position:relative;height:100vh" id="show">
 
@@ -391,6 +391,128 @@ formRef.<span class="kw">value</span>?.<span class="fn">validate</span>(...);</p
 }
 &lt;/<span class="kw">style</span>&gt;</pre>
       <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-top:6px">scoped 自动生成唯一属性<br>如 data-v-xxxxx<br>不会污染其他组件</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 新增: 传统三件套 vs Vue SFC ===== -->
+<div class="slide" id="s6a" style="background:linear-gradient(135deg,#1a0a2e,#0a1628)">
+  <h2>🔀 传统 HTML/CSS/JS vs Vue SFC — 同一功能的两种写法</h2>
+  <div class="c2">
+    <div class="cc cc-r">
+      <div style="font-size:.88rem;font-weight:700;color:#f87171;margin-bottom:6px">❌ 传统方式：三个文件，手动关联</div>
+      <pre style="font-size:.71rem"><span class="cm">&lt;!-- ===== index.html ===== --&gt;</span>
+&lt;<span class="fn">link</span> <span class="str">rel</span>=<span class="str">"stylesheet"</span> <span class="str">href</span>=<span class="str">"style.css"</span>&gt;
+&lt;<span class="fn">div</span> <span class="str">id</span>=<span class="str">"app"</span>&gt;
+  &lt;<span class="fn">input</span> <span class="str">id</span>=<span class="str">"nameInput"</span> /&gt;
+  &lt;<span class="fn">button</span> <span class="str">id</span>=<span class="str">"submitBtn"</span>&gt;提交&lt;/<span class="fn">button</span>&gt;
+  &lt;<span class="fn">div</span> <span class="str">id</span>=<span class="str">"result"</span>&gt;结果：&lt;/<span class="fn">div</span>&gt;
+&lt;/<span class="fn">div</span>&gt;
+&lt;<span class="fn">script</span> <span class="str">src</span>=<span class="str">"script.js"</span>&gt;&lt;/<span class="fn">script</span>&gt;
+
+<span class="cm">/* ===== style.css ===== */</span>
+<span class="cls">#app</span> { <span class="kw">padding</span>: <span class="num">20</span><span class="kw">px</span>; }
+<span class="cls">#nameInput</span> { <span class="kw">width</span>: <span class="num">200</span><span class="kw">px</span>; }
+<span class="cls">#submitBtn</span> { <span class="kw">background</span>: <span class="str">blue</span>; }
+
+<span class="cm">/* ===== script.js ===== */</span>
+document.<span class="fn">getElementById</span>(<span class="str">'submitBtn'</span>)
+  .<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () => {
+    <span class="kw">const</span> name = document
+      .<span class="fn">getElementById</span>(<span class="str">'nameInput'</span>).value;
+    document.<span class="fn">getElementById</span>(<span class="str">'result'</span>)
+      .textContent = <span class="str">'结果：'</span> + name;
+  });</pre>
+    </div>
+    <div class="cc cc-g">
+      <div style="font-size:.88rem;font-weight:700;color:#34d399;margin-bottom:6px">✅ Vue SFC：一个文件，自动关联</div>
+      <pre style="font-size:.71rem"><span class="cm">&lt;!-- ===== MyForm.vue — 一个文件搞定 ===== --&gt;</span>
+&lt;<span class="kw">template</span>&gt;
+  &lt;<span class="fn">div</span> <span class="str">class</span>=<span class="str">"app"</span>&gt;
+    &lt;<span class="fn">input</span> <span class="kw">v-model</span>=<span class="str">"name"</span> <span class="str">class</span>=<span class="str">"ipt"</span> /&gt;
+    &lt;<span class="fn">button</span> <span class="str">class</span>=<span class="str">"btn"</span> <span class="str">@click</span>=<span class="str">"submit"</span>&gt;
+      提交
+    &lt;/<span class="fn">button</span>&gt;
+    &lt;<span class="fn">div</span>&gt;结果：{{ result }}&lt;/<span class="fn">div</span>&gt;
+  &lt;/<span class="fn">div</span>&gt;
+&lt;/<span class="kw">template</span>&gt;
+
+&lt;<span class="kw">script setup lang</span>=<span class="str">"ts"</span>&gt;
+<span class="kw">import</span> { ref } <span class="kw">from</span> <span class="str">'vue'</span>
+<span class="kw">const</span> name = <span class="fn">ref</span>(<span class="str">''</span>)
+<span class="kw">const</span> result = <span class="fn">ref</span>(<span class="str">''</span>)
+<span class="kw">function</span> <span class="fn">submit</span>() {
+  result.<span class="kw">value</span> = <span class="str">'结果：'</span> + name.<span class="kw">value</span>
+}
+&lt;/<span class="kw">script</span>&gt;
+
+&lt;<span class="kw">style scoped</span>&gt;
+<span class="cls">.app</span> { <span class="kw">padding</span>: <span class="num">20</span><span class="kw">px</span>; }
+<span class="cls">.ipt</span> { <span class="kw">width</span>: <span class="num">200</span><span class="kw">px</span>; }
+<span class="cls">.btn</span> { <span class="kw">background</span>: <span class="str">blue</span>; }
+&lt;/<span class="kw">style</span>&gt;</pre>
+    </div>
+  </div>
+  <div style="margin-top:12px;font-size:.82rem;color:rgba(255,255,255,.55);text-align:center">
+    传统：<strong style="color:#f87171">3个文件 + ID查找 + 手动赋值 + 全局CSS冲突</strong>　　Vue：<strong style="color:#34d399">1个文件 + 数据绑定 + 自动更新 + scoped隔离</strong>
+  </div>
+</div>
+
+<!-- ===== 新增: 数据绑定对比 ===== -->
+<div class="slide" id="s6b" style="background:linear-gradient(135deg,#0f172a,#1e1b4b)">
+  <h2>📝 数据绑定：v-model vs getElementById</h2>
+  <div class="c2">
+    <div class="cc cc-r">
+      <div style="font-size:.88rem;font-weight:700;color:#f87171;margin-bottom:6px">❌ 传统方式：手动读写 DOM</div>
+      <pre style="font-size:.73rem"><span class="cm">// ===== 取值：找到元素 → 读属性 =====</span>
+<span class="kw">var</span> nameEl = document.<span class="fn">getElementById</span>(<span class="str">'nameInput'</span>);
+<span class="kw">var</span> name = nameEl.value;  <span class="cm">// 手动取</span>
+
+<span class="cm">// ===== 赋值：找到元素 → 写属性 =====</span>
+document.<span class="fn">getElementById</span>(<span class="str">'nameInput'</span>).value
+  = <span class="str">'张三'</span>;                <span class="cm">// 手动改</span>
+
+<span class="cm">// ===== 控制状态：手动禁/启用 =====</span>
+document.<span class="fn">getElementById</span>(<span class="str">'nameInput'</span>).disabled
+  = <span class="kw">true</span>;                  <span class="cm">// 手动控制</span>
+
+<span class="cm">// jQuery 时代也一个道理</span>
+$(<span class="str">'#nameInput'</span>).<span class="fn">val</span>();       <span class="cm">// 取值</span>
+$(<span class="str">'#nameInput'</span>).<span class="fn">val</span>(<span class="str">'张三'</span>);  <span class="cm">// 赋值</span>
+$(<span class="str">'#nameInput'</span>).<span class="fn">prop</span>(<span class="str">'disabled'</span>, <span class="kw">true</span>);
+
+<span class="cm">// ⚠️ 核心问题：数据和 DOM 是两份
+//   数据只能"暂存"在 DOM 中
+//   每次读写都要先找到 DOM 元素</span></pre>
+    </div>
+    <div>
+      <div class="cc cc-g" style="margin-bottom:10px">
+        <div style="font-size:.88rem;font-weight:700;color:#34d399;margin-bottom:6px">✅ Vue 方式：v-model 双向绑定</div>
+        <pre style="font-size:.73rem"><span class="cm">// ===== 定义数据 =====</span>
+<span class="kw">const</span> name = <span class="fn">ref</span>(<span class="str">''</span>);
+<span class="kw">const</span> disabled = <span class="fn">ref</span>(<span class="kw">false</span>);
+
+<span class="cm">// ===== 模板中绑定 — 仅一行！ =====
+// &lt;input v-model="name" :disabled="disabled" /&gt;</span>
+
+<span class="cm">// ===== 改数据：自动同步到界面 =====</span>
+name.<span class="kw">value</span> = <span class="str">'张三'</span>;         <span class="cm">// 输入框自动显示"张三"</span>
+disabled.<span class="kw">value</span> = <span class="kw">true</span>;         <span class="cm">// 输入框自动禁用</span>
+
+<span class="cm">// ===== 读数据：用户输入自动同步 =====</span>
+console.<span class="fn">log</span>(name.<span class="kw">value</span>);      <span class="cm">// 永远是当前输入框的值</span>
+
+<span class="cm">// ⭐ 核心：数据和 DOM 是同一份
+//   你只需要关心变量，不用管 DOM</span></pre>
+      </div>
+      <div style="padding:12px 16px;background:rgba(34,211,153,.06);border:1px solid rgba(34,211,153,.2);border-radius:10px">
+        <div style="font-size:.78rem;color:#34d399;font-weight:600;margin-bottom:3px">💡 v-model 本质</div>
+        <div style="font-size:.73rem;color:rgba(255,255,255,.7);line-height:1.8">
+          v-model 是 <code>:value="x"</code> + <code>@input="x=$event"</code> 的语法糖<br>
+          意思是：显示变量x的值 ←→ 用户输入时自动更新x<br>
+          <strong>不需要 getElementById，不需要 .value 赋值到 DOM</strong>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1090,6 +1212,262 @@ utils/
   </div>
 </div>
 
+<!-- ===== 新增: 条件渲染对比 ===== -->
+<div class="slide" id="s16a" style="background:linear-gradient(135deg,#0a1628,#0f1a2e)">
+  <h2>🎛️ 条件渲染：v-if / v-show vs 传统 display:none</h2>
+  <div class="c2">
+    <div class="cc cc-r">
+      <div style="font-size:.88rem;font-weight:700;color:#f87171;margin-bottom:6px">❌ 传统方式：手动操作 CSS / innerHTML</div>
+      <pre style="font-size:.73rem"><span class="cm">// 方式一：display 切换（DOM 还在）</span>
+<span class="kw">var</span> el = document.<span class="fn">getElementById</span>(<span class="str">'msg'</span>);
+<span class="kw">if</span> (isLogin) {
+  el.style.display = <span class="str">'block'</span>;
+} <span class="kw">else</span> {
+  el.style.display = <span class="str">'none'</span>;
+}
+
+<span class="cm">// 方式二：innerHTML 写入/清空</span>
+<span class="kw">var</span> userArea = document.<span class="fn">getElementById</span>(<span class="str">'user'</span>);
+<span class="kw">if</span> (!isLogin) {
+  userArea.innerHTML = <span class="str">'请先登录'</span>;
+} <span class="kw">else</span> {
+  userArea.innerHTML =
+    <span class="str">'&lt;span&gt;欢迎，'</span> + userName +
+    <span class="str">'&lt;/span&gt;'</span>;
+}
+
+<span class="cm">// 方式三：多个状态时更复杂</span>
+<span class="kw">var</span> panel = document.<span class="fn">getElementById</span>(<span class="str">'panel'</span>);
+<span class="kw">if</span> (status === <span class="str">'loading'</span>) {
+  panel.style.display = <span class="str">'block'</span>;
+  panel.innerHTML = <span class="str">'加载中...'</span>;
+} <span class="kw">else if</span> (status === <span class="str">'error'</span>) {
+  panel.style.display = <span class="str">'block'</span>;
+  panel.innerHTML = <span class="str">'出错了！'</span>;
+} <span class="kw">else</span> {
+  panel.style.display = <span class="str">'none'</span>;
+}</pre>
+    </div>
+    <div>
+      <div class="cc cc-g" style="margin-bottom:10px">
+        <div style="font-size:.88rem;font-weight:700;color:#34d399;margin-bottom:6px">✅ Vue 方式：声明式条件渲染</div>
+        <pre style="font-size:.73rem"><span class="cm">&lt;!-- v-if: DOM 真正地插入/移除 --&gt;</span>
+&lt;<span class="fn">div</span> <span class="kw">v-if</span>=<span class="str">"isLogin"</span>&gt;欢迎，{{ name }}&lt;/<span class="fn">div</span>&gt;
+&lt;<span class="fn">div</span> <span class="kw">v-else</span>&gt;请先登录&lt;/<span class="fn">div</span>&gt;
+
+<span class="cm">&lt;!-- v-show: display:none 切换 --&gt;</span>
+&lt;<span class="fn">div</span> <span class="kw">v-show</span>=<span class="str">"visible"</span>&gt;
+  频繁切换的内容
+&lt;/<span class="fn">div</span>&gt;
+
+<span class="cm">&lt;!-- 多状态：v-if / v-else-if / v-else --&gt;</span>
+&lt;<span class="fn">div</span> <span class="kw">v-if</span>=<span class="str">"status === 'loading'"</span>&gt;
+  加载中...
+&lt;/<span class="fn">div</span>&gt;
+&lt;<span class="fn">div</span> <span class="kw">v-else-if</span>=<span class="str">"status === 'error'"</span>&gt;
+  出错了！
+&lt;/<span class="fn">div</span>&gt;
+&lt;<span class="fn">div</span> <span class="kw">v-else</span>&gt;
+  正常内容
+&lt;/<span class="fn">div</span>&gt;</pre>
+      </div>
+      <table style="font-size:.72rem">
+        <tr><th style="color:#34d399">对比</th><th style="color:#f87171">传统方式</th><th style="color:#34d399">Vue</th></tr>
+        <tr><td>写法</td><td>命令式：先找到元素，再操作</td><td>声明式：直接用条件表达式</td></tr>
+        <tr><td>DOM变化</td><td>手动改display/innerHTML</td><td>数据变→自动变化</td></tr>
+        <tr><td>多个状态</td><td>复杂的if-else操作DOM</td><td>v-else-if 链清晰</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 新增: 列表渲染对比 ===== -->
+<div class="slide" id="s16b" style="background:linear-gradient(135deg,#0d1f36,#071a2e)">
+  <h2>📋 列表渲染：v-for vs 手动拼接 innerHTML</h2>
+  <div class="c2">
+    <div class="cc cc-r">
+      <div style="font-size:.88rem;font-weight:700;color:#f87171;margin-bottom:6px">❌ 传统方式：字符串拼接 + innerHTML</div>
+      <pre style="font-size:.73rem"><span class="cm">// ===== 渲染用户列表 =====</span>
+<span class="kw">var</span> users = [
+  { id: <span class="num">1</span>, name: <span class="str">'张三'</span>, age: <span class="num">28</span> },
+  { id: <span class="num">2</span>, name: <span class="str">'李四'</span>, age: <span class="num">32</span> },
+];
+
+<span class="kw">var</span> html = <span class="str">''</span>;
+<span class="kw">for</span> (<span class="kw">var</span> i = <span class="num">0</span>; i &lt; users.length; i++) {
+  <span class="kw">var</span> u = users[i];
+  html +=
+    <span class="str">'&lt;tr&gt;'</span> +
+    <span class="str">'&lt;td&gt;'</span> + u.id   + <span class="str">'&lt;/td&gt;'</span> +
+    <span class="str">'&lt;td&gt;'</span> + u.name + <span class="str">'&lt;/td&gt;'</span> +
+    <span class="str">'&lt;td&gt;'</span> + u.age  + <span class="str">'&lt;/td&gt;'</span> +
+    <span class="str">'&lt;/tr&gt;'</span>;
+}
+document.<span class="fn">getElementById</span>(<span class="str">'tableBody'</span>)
+  .innerHTML = html;
+
+<span class="cm">// ===== 更新时全量重写 =====</span>
+users.<span class="fn">push</span>({ id: <span class="num">3</span>, name: <span class="str">'王五'</span>, ... });
+<span class="cm">// 必须重新拼接整个表格 HTML 再替换</span>
+<span class="cm">// 即使只加了一行，也要全部重渲染</span></pre>
+      <div style="font-size:.73rem;color:rgba(255,255,255,.5);margin-top:4px">⚠️ 性能差 + 容易 XSS（HTML 拼接）</div></div>
+    <div>
+      <div class="cc cc-g" style="margin-bottom:10px">
+        <div style="font-size:.88rem;font-weight:700;color:#34d399;margin-bottom:6px">✅ Vue 方式：v-for 声明式列表</div>
+        <pre style="font-size:.73rem"><span class="cm">&lt;!-- 模板：写好一行，自动循环 --&gt;</span>
+&lt;<span class="fn">tr</span> <span class="kw">v-for</span>=<span class="str">"user in users"</span> <span class="str">:key</span>=<span class="str">"user.id"</span>&gt;
+  &lt;<span class="fn">td</span>&gt;{{ user.id }}&lt;/<span class="fn">td</span>&gt;
+  &lt;<span class="fn">td</span>&gt;{{ user.name }}&lt;/<span class="fn">td</span>&gt;
+  &lt;<span class="fn">td</span>&gt;{{ user.age }}&lt;/<span class="fn">td</span>&gt;
+&lt;/<span class="fn">tr</span>&gt;
+
+<span class="cm">// 数据</span>
+<span class="kw">const</span> users = <span class="fn">ref</span>([...]);
+
+<span class="cm">// 更新：只改数据，Vue 自动更新 DOM</span>
+users.<span class="kw">value</span>.<span class="fn">push</span>({ id: <span class="num">3</span>, name: <span class="str">'王五'</span>, ... });
+<span class="cm">// ⭐ 只新增一行 DOM，不是全量重渲染！</span>
+
+<span class="cm">// 删除也一样</span>
+users.<span class="kw">value</span> = users.<span class="kw">value</span>.<span class="fn">filter</span>(u =&gt; u.id !== <span class="num">2</span>);
+<span class="cm">// ⭐ 自动移除对应 DOM 节点</span></pre>
+      </div>
+      <div style="padding:12px 16px;background:rgba(34,211,153,.06);border:1px solid rgba(34,211,153,.2);border-radius:10px">
+        <div style="font-size:.78rem;color:#34d399;font-weight:600;margin-bottom:3px">💡 :key 的作用</div>
+        <div style="font-size:.73rem;color:rgba(255,255,255,.7);line-height:1.8">
+          Vue 用 <code>:key</code> 给每一行一个唯一ID，<br>
+          这样就能<b>精确知道哪一行变了</b>，只更新变化的部分。<br>
+          没有 key 或 key 重复会导致渲染错误。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 新增: 事件处理对比 ===== -->
+<div class="slide" id="s16c" style="background:linear-gradient(135deg,#1a0a2e,#0f172a)">
+  <h2>🖱️ 事件处理：@click vs onclick / addEventListener</h2>
+  <div class="c2">
+    <div class="cc cc-r">
+      <div style="font-size:.88rem;font-weight:700;color:#f87171;margin-bottom:6px">❌ 传统方式：三种写法，各自有问题</div>
+      <pre style="font-size:.72rem"><span class="cm">&lt;!-- 1. HTML onclick — JS 混在 HTML 中 --&gt;</span>
+&lt;<span class="fn">button</span> onclick=<span class="str">"handleClick(userId)"</span>&gt;
+
+<span class="cm">// 2. DOM API — 代码分散不直观</span>
+document.<span class="fn">getElementById</span>(<span class="str">'btn'</span>)
+  .<span class="fn">addEventListener</span>(<span class="str">'click'</span>, <span class="fn">handleClick</span>);
+
+<span class="cm">// 3. jQuery — 依赖第三方库</span>
+$(<span class="str">'#btn'</span>).<span class="fn">on</span>(<span class="str">'click'</span>, <span class="kw">function</span>() { ... });
+
+<span class="cm">// ===== 传递参数很麻烦 =====</span>
+<span class="cm">// 需要在闭包中捕获当前行的数据</span>
+<span class="kw">for</span> (<span class="kw">var</span> i = <span class="num">0</span>; i &lt; rows.length; i++) {
+  (<span class="kw">function</span>(row) {  <span class="cm">// 闭包陷阱！</span>
+    row.<span class="fn">querySelector</span>(<span class="str">'.btn'</span>)
+      .<span class="fn">addEventListener</span>(<span class="str">'click'</span>, <span class="kw">function</span>() {
+        <span class="fn">handleDelete</span>(row.dataset.id);
+      });
+  })(rows[i]);
+}</pre>
+    </div>
+    <div>
+      <div class="cc cc-g" style="margin-bottom:10px">
+        <div style="font-size:.88rem;font-weight:700;color:#34d399;margin-bottom:6px">✅ Vue 方式：@事件名="处理函数"</div>
+        <pre style="font-size:.73rem"><span class="cm">&lt;!-- 无参数 --&gt;</span>
+&lt;<span class="fn">button</span> <span class="str">@click</span>=<span class="str">"handleSubmit"</span>&gt;提交&lt;/<span class="fn">button</span>&gt;
+
+<span class="cm">&lt;!-- 带参数 --&gt;</span>
+&lt;<span class="fn">button</span> <span class="str">@click</span>=<span class="str">"handleEdit(row)"</span>&gt;编辑&lt;/<span class="fn">button</span>&gt;
+&lt;<span class="fn">button</span> <span class="str">@click</span>=<span class="str">"handleDelete(row.id)"</span>&gt;删除&lt;/<span class="fn">button</span>&gt;
+
+<span class="cm">&lt;!-- 行内表达式 --&gt;</span>
+&lt;<span class="fn">button</span> <span class="str">@click</span>=<span class="str">"count++"</span>&gt;+1&lt;/<span class="fn">button</span>&gt;
+&lt;<span class="fn">button</span> <span class="str">@click</span>=<span class="str">"visible = !visible"</span>&gt;切换&lt;/<span class="fn">button</span>&gt;
+
+<span class="cm">&lt;!-- 键盘事件 --&gt;</span>
+&lt;<span class="fn">input</span> <span class="str">@keyup.enter</span>=<span class="str">"handleLogin"</span>/&gt;
+&lt;<span class="fn">input</span> <span class="str">@keyup.esc</span>=<span class="str">"handleCancel"</span>/&gt;
+
+<span class="cm">&lt;!-- 修饰符 --&gt;</span>
+<span class="str">@submit.prevent</span>=<span class="str">"..."</span>   <span class="cm">// 阻止默认行为</span>
+<span class="str">@click.stop</span>=<span class="str">"..."</span>      <span class="cm">// 阻止冒泡</span>
+<span class="str">@click.once</span>=<span class="str">"..."</span>     <span class="cm">// 只触发一次</span></pre>
+      </div>
+      <div style="font-size:.73rem;color:rgba(255,255,255,.6);line-height:1.8">
+        <strong style="color:#34d399">核心区别：</strong><br>
+        传统：在 JS 中找元素 → 绑定事件 → 闭包传参<br>
+        Vue：直接在模板上声明，<strong>HTML 和 JS 在一起</strong>，参数直接传
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 新增: computed对比 ===== -->
+<div class="slide" id="s16d" style="background:linear-gradient(135deg,#0f1a2e,#1a0533)">
+  <h2>🧮 computed 缓存 vs 普通函数 — 为什么不用函数？</h2>
+  <div class="c2">
+    <div class="cc cc-r">
+      <div style="font-size:.88rem;font-weight:700;color:#f87171;margin-bottom:6px">❌ 普通函数：每次调用都重新计算</div>
+      <pre style="font-size:.73rem"><span class="cm">// 定义函数</span>
+<span class="kw">function</span> <span class="fn">getFullName</span>() {
+  console.<span class="fn">log</span>(<span class="str">'计算了！'</span>);
+  <span class="kw">return</span> firstName + <span class="str">' '</span> + lastName;
+}
+
+<span class="cm">// 模板中调用 3 次 = 计算 3 次</span>
+<span class="cm">&lt;div&gt;{{ getFullName() }}&lt;/div&gt;
+&lt;div&gt;{{ getFullName() }}&lt;/div&gt;
+&lt;div&gt;{{ getFullName() }}&lt;/div&gt;</span>
+<span class="cm">// 输出："计算了！" × 3</span>
+
+<span class="cm">// ===== 更严重的场景 =====</span>
+<span class="kw">function</span> <span class="fn">getFilteredList</span>() {
+  <span class="kw">return</span> bigList.<span class="fn">filter</span>(item =&gt;
+    item.status === <span class="str">'active'</span>
+  ).<span class="fn">map</span>(<span class="fn">expensiveTransform</span>);
+}
+<span class="cm">// 每次渲染都重新遍历大数组+计算
+// 即使数据完全没变！</span></pre>
+    </div>
+    <div>
+      <div class="cc cc-g" style="margin-bottom:10px">
+        <div style="font-size:.88rem;font-weight:700;color:#34d399;margin-bottom:6px">✅ computed：带缓存，依赖不变不重算</div>
+        <pre style="font-size:.73rem"><span class="cm">// 定义计算属性</span>
+<span class="kw">const</span> fullName = <span class="fn">computed</span>(() => {
+  console.<span class="fn">log</span>(<span class="str">'计算了！'</span>);
+  <span class="kw">return</span> firstName.<span class="kw">value</span> +
+    <span class="str">' '</span> + lastName.<span class="kw">value</span>;
+});
+
+<span class="cm">// 模板中访问 3 次 = 只计算 1 次！</span>
+<span class="cm">&lt;div&gt;{{ fullName }}&lt;/div&gt;</span>
+<span class="cm">&lt;div&gt;{{ fullName }}&lt;/div&gt;</span>
+<span class="cm">&lt;div&gt;{{ fullName }}&lt;/div&gt;</span>
+<span class="cm">// 输出："计算了！" × 1（缓存命中）</span>
+
+<span class="cm">// ===== 同样的场景 =====</span>
+<span class="kw">const</span> filtered = <span class="fn">computed</span>(() =&gt;
+  bigList.<span class="kw">value</span>
+    .<span class="fn">filter</span>(i =&gt; i.status === <span class="str">'active'</span>)
+    .<span class="fn">map</span>(<span class="fn">expensiveTransform</span>)
+);
+<span class="cm">// ⭐ bigList 没变 → 直接返回缓存，不计算
+// ⭐ 只有 bigList 变了才重新算</span></pre>
+      </div>
+      <div style="padding:10px 14px;background:rgba(251,146,60,.06);border:1px solid rgba(251,146,60,.2);border-radius:10px">
+        <div style="font-size:.75rem;color:#fb923c;font-weight:600;margin-bottom:3px">📌 什么时候用 computed？</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.7);line-height:1.8">
+          ① 计算成本高的操作（过滤/排序/转换）<br>
+          ② 模板中被多次引用<br>
+          ③ 依赖其他响应式数据<br>
+          ④ 需要自动追踪依赖变化
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 17. 项目中的核心模式 ===== -->
 <div class="slide" id="s17" style="background:linear-gradient(135deg,#0a1628,#071a2e)">
   <h2>🔑 项目核心模式：从点击按钮到页面刷新</h2>
@@ -1150,6 +1528,135 @@ utils/
     }
   }
 }</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 新增: 响应式更新对比 ===== -->
+<div class="slide" id="s17a" style="background:linear-gradient(135deg,#0a1628,#0f172a)">
+  <h2>🔄 响应式更新 vs 手动 DOM 刷新</h2>
+  <div class="c2">
+    <div class="cc cc-r">
+      <div style="font-size:.88rem;font-weight:700;color:#f87171;margin-bottom:6px">❌ 传统方式：数据变了，手动更新所有相关 DOM</div>
+      <pre style="font-size:.72rem"><span class="cm">// 场景：用户修改了一个订单状态</span>
+<span class="kw">var</span> order = { id: <span class="num">1</span>, status: <span class="str">'pending'</span> };
+
+<span class="cm">// 改了数据</span>
+order.status = <span class="str">'completed'</span>;
+
+<span class="cm">// ===== 然后必须手动更新所有相关 DOM =====
+// 1. 更新状态标签</span>
+document.<span class="fn">getElementById</span>(<span class="str">'statusBadge'</span>)
+  .textContent = <span class="str">'已完成'</span>;
+document.<span class="fn">getElementById</span>(<span class="str">'statusBadge'</span>)
+  .className = <span class="str">'badge badge-success'</span>;
+
+<span class="cm">// 2. 更新操作按钮（完成→不可操作）</span>
+document.<span class="fn">getElementById</span>(<span class="str">'editBtn'</span>)
+  .style.display = <span class="str">'none'</span>;
+
+<span class="cm">// 3. 更新统计数字</span>
+document.<span class="fn">getElementById</span>(<span class="str">'completedCount'</span>)
+  .textContent = <span class="fn">getCompletedCount</span>();
+
+<span class="cm">// ⚠️ 忘更新任何一处 → 界面和数据不一致！
+// 数据是中心，但 DOM 不会自己变</span></pre>
+    </div>
+    <div>
+      <div class="cc cc-g" style="margin-bottom:10px">
+        <div style="font-size:.88rem;font-weight:700;color:#34d399;margin-bottom:6px">✅ Vue 方式：改数据 → 界面自动全部更新</div>
+        <pre style="font-size:.72rem"><span class="cm">// 场景：用户修改了一个订单状态</span>
+<span class="kw">const</span> order = <span class="fn">ref</span>({ id: <span class="num">1</span>, status: <span class="str">'pending'</span> });
+
+<span class="cm">// 改了数据</span>
+order.<span class="kw">value</span>.status = <span class="str">'completed'</span>;
+
+<span class="cm">// ===== 什么都不用做！Vue 自动处理 ====
+// 1. 状态标签 → computed 自动变为绿色</span>
+<span class="kw">const</span> badgeClass = <span class="fn">computed</span>(() =&gt;
+  order.<span class="kw">value</span>.status === <span class="str">'completed'</span>
+    ? <span class="str">'badge-success'</span> : <span class="str">'badge-warning'</span>
+);
+<span class="cm">// 2. 编辑按钮 → 自动消失</span>
+&lt;<span class="fn">button</span> <span class="kw">v-if</span>=<span class="str">"order.status !== 'completed'"</span>&gt;
+  编辑
+&lt;/<span class="fn">button</span>&gt;
+<span class="cm">// 3. 统计数字 → 自动更新</span>
+&lt;<span class="fn">span</span>&gt;{{ completedCount }}&lt;/<span class="fn">span</span>&gt;
+<span class="cm">// ⭐ 全部自动！不会遗漏任何地方</span></pre>
+      </div>
+      <div style="padding:10px 14px;background:rgba(34,211,153,.06);border:1px solid rgba(34,211,153,.2);border-radius:10px">
+        <div style="font-size:.75rem;color:#34d399;font-weight:600;margin-bottom:3px">💡 响应式系统如何工作？</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.7);line-height:1.8">
+          Vue 在读取 ref.value 时记录"谁在用这个数据"<br>
+          当 ref.value 被修改时，通知所有使用者更新<br>
+          你只需要<b>改数据</b>，界面就是一个"数据的实时投影"
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 新增: 组件复用对比 ===== -->
+<div class="slide" id="s17b" style="background:linear-gradient(135deg,#071a2e,#1a0a2e)">
+  <h2>🧩 组件复用 vs 复制粘贴 HTML</h2>
+  <div class="c2">
+    <div class="cc cc-r">
+      <div style="font-size:.88rem;font-weight:700;color:#f87171;margin-bottom:6px">❌ 传统方式：3 个地方用同一个卡片 → 复制粘贴 3 遍</div>
+      <pre style="font-size:.71rem"><span class="cm">&lt;!-- ===== 页面 A ===== --&gt;</span>
+&lt;<span class="fn">div</span> <span class="str">class</span>=<span class="str">"user-card"</span>&gt;
+  &lt;<span class="fn">img</span> <span class="str">:src</span>=<span class="str">"avatar"</span> <span class="str">class</span>=<span class="str">"avatar"</span>&gt;
+  &lt;<span class="fn">h3</span>&gt;张三&lt;/<span class="fn">h3</span>&gt;
+  &lt;<span class="fn">p</span>&gt;部门：技术部&lt;/<span class="fn">p</span>&gt;
+  &lt;<span class="fn">button</span> onclick=<span class="str">"handleEdit"</span>&gt;编辑&lt;/<span class="fn">button</span>&gt;
+&lt;/<span class="fn">div</span>&gt;
+
+<span class="cm">&lt;!-- ===== 页面 B — 复制粘贴 ===== --&gt;</span>
+&lt;<span class="fn">div</span> <span class="str">class</span>=<span class="str">"user-card"</span>&gt;
+  ... 完全相同的结构 ...
+&lt;/<span class="fn">div</span>&gt;
+
+<span class="cm">&lt;!-- ===== 页面 C — 再复制 ===== --&gt;</span>
+&lt;<span class="fn">div</span> <span class="str">class</span>=<span class="str">"user-card"</span>&gt;
+  ... 又一遍 ...
+&lt;/<span class="fn">div</span>&gt;
+
+<span class="cm">// 需求：给卡片加个"删除"按钮
+// → 要改 3 个地方，容易遗漏</span></pre>
+    </div>
+    <div>
+      <div class="cc cc-g" style="margin-bottom:10px">
+        <div style="font-size:.88rem;font-weight:700;color:#34d399;margin-bottom:6px">✅ Vue 方式：定义一次组件，到处复用</div>
+        <pre style="font-size:.72rem"><span class="cm">&lt;!-- ===== UserCard.vue — 只写一次 ===== --&gt;</span>
+&lt;<span class="kw">template</span>&gt;
+  &lt;<span class="fn">div</span> <span class="str">class</span>=<span class="str">"user-card"</span>&gt;
+    &lt;<span class="fn">img</span> <span class="str">:src</span>=<span class="str">"avatar"</span> <span class="str">class</span>=<span class="str">"avatar"</span>&gt;
+    &lt;<span class="fn">h3</span>&gt;{{ name }}&lt;/<span class="fn">h3</span>&gt;
+    &lt;<span class="fn">p</span>&gt;部门：{{ dept }}&lt;/<span class="fn">p</span>&gt;
+    &lt;<span class="fn">button</span> <span class="str">@click</span>=<span class="str">"$emit('edit')"</span>&gt;编辑&lt;/<span class="fn">button</span>&gt;
+  &lt;/<span class="fn">div</span>&gt;
+&lt;/<span class="kw">template</span>&gt;
+
+<span class="kw">const</span> props = <span class="fn">defineProps</span>&lt;{
+  name: <span class="kw">string</span>; dept: <span class="kw">string</span>; avatar: <span class="kw">string</span>
+}&gt;()
+<span class="kw">const</span> emit = <span class="fn">defineEmits</span>&lt;{(e:<span class="str">'edit'</span>):<span class="kw">void</span>}&gt;()
+
+<span class="cm">&lt;!-- ===== 页面 A / B / C — 一行搞定 ===== --&gt;</span>
+&lt;<span class="fn">UserCard</span>
+  <span class="str">:name</span>=<span class="str">"'张三'"</span> <span class="str">:dept</span>=<span class="str">"'技术部'"</span>
+  <span class="str">:avatar</span>=<span class="str">"'avatar.png'"</span>
+  <span class="str">@edit</span>=<span class="str">"handleEdit"</span>
+/&gt;
+
+<span class="cm">// 要加"删除"按钮 → 只改 UserCard.vue
+// 3 个页面自动生效！</span></pre>
+      </div>
+      <div style="font-size:.73rem;color:rgba(255,255,255,.6);line-height:1.8">
+        <strong style="color:#34d399">组件 = 可复用的"积木块"</strong><br>
+        定义一次，到处使用。Props 控制外观，Emits 控制行为。<br>
+        你的 ComponentsCreate.vue 就是典型的复用组件。
       </div>
     </div>
   </div>
@@ -1243,6 +1750,143 @@ utils/
   </div>
 </div>
 
+<!-- ===== 新增: 样式隔离对比 ===== -->
+<div class="slide" id="s19a" style="background:linear-gradient(135deg,#0a1628,#0f0f1a)">
+  <h2>🎨 样式隔离：scoped vs 全局 CSS 冲突</h2>
+  <div class="c2">
+    <div class="cc cc-r">
+      <div style="font-size:.88rem;font-weight:700;color:#f87171;margin-bottom:6px">❌ 传统方式：全局 CSS，命名冲突是常态</div>
+      <pre style="font-size:.72rem"><span class="cm">/* ===== style.css — 全局生效 ===== */</span>
+<span class="cls">.card</span> {
+  <span class="kw">padding</span>: <span class="num">20</span><span class="kw">px</span>; <span class="kw">background</span>: <span class="str">white</span>;
+}
+<span class="cls">.header</span> {
+  <span class="kw">font-size</span>: <span class="num">18</span><span class="kw">px</span>; <span class="kw">font-weight</span>: <span class="kw">bold</span>;
+}
+<span class="cls">.btn</span> {
+  <span class="kw">color</span>: <span class="str">white</span>; <span class="kw">background</span>: <span class="str">blue</span>;
+}
+
+<span class="cm">/* ===== 问题一：命名冲突 =====
+//   页面 A 的 .card 和 页面 B 的 .card
+//   互相覆盖，不知道是谁改的类型
+//   只能靠命名规范：.page1-card、
+//   .page2-card、.page3-card... */</span>
+
+<span class="cm">/* ===== 问题二：选择器优先级战争 ===== */
+// 团队 10 个人，各自写 CSS
+// 最后靠 !important 解决冲突
+// 维护成本极高</span>
+
+<span class="cm">/* ===== 问题三：组件化时样式互相渗透 =====
+//   在页面 A 引入一个第三方组件
+//   组件的 CSS 污染了 A 的页面
+//   或者 A 的 CSS 破坏了组件的样式 */</span></pre>
+    </div>
+    <div>
+      <div class="cc cc-g" style="margin-bottom:10px">
+        <div style="font-size:.88rem;font-weight:700;color:#34d399;margin-bottom:6px">✅ Vue 方式：scoped 自动隔离</div>
+        <pre style="font-size:.72rem"><span class="cm">&lt;!-- ===== Page1.vue — 样式只在 Page1 生效 ===== --&gt;</span>
+&lt;<span class="kw">style scoped</span>&gt;
+<span class="cls">.card</span> {
+  <span class="kw">padding</span>: <span class="num">20</span><span class="kw">px</span>;
+}
+<span class="cls">.title</span> {
+  <span class="kw">font-size</span>: <span class="num">24</span><span class="kw">px</span>;
+}
+&lt;/<span class="kw">style</span>&gt;
+
+<span class="cm">&lt;!-- ===== Page2.vue — 样式只在 Page2 生效 ===== --&gt;</span>
+&lt;<span class="kw">style scoped</span>&gt;
+<span class="cls">.card</span> {  <span class="cm">// ← 同名，但不会冲突！</span>
+  <span class="kw">background</span>: <span class="str">black</span>;
+}
+<span class="cls">.title</span> {
+  <span class="kw">color</span>: <span class="str">red</span>;
+}
+&lt;/<span class="kw">style</span>&gt;</pre>
+      </div>
+      <div style="padding:12px 16px;background:rgba(34,211,153,.06);border:1px solid rgba(34,211,153,.2);border-radius:10px;margin-bottom:10px">
+        <div style="font-size:.78rem;color:#34d399;font-weight:600;margin-bottom:3px">💡 scoped 原理</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.7);line-height:1.8">
+          Vue 给每个组件的元素自动加上 <code>data-v-xxxxx</code> 属性<br>
+          <code>.card</code> 编译后变成 <code>.card[data-v-abc123]</code><br>
+          每个组件的属性不同，所以样式自动隔离
+        </div>
+      </div>
+      <table style="font-size:.72rem">
+        <tr><th style="color:#34d399"></th><th style="color:#f87171">全局 CSS</th><th style="color:#34d399">scoped</th></tr>
+        <tr><td>作用范围</td><td>整个项目</td><td>当前组件</td></tr>
+        <tr><td>命名冲突</td><td>🔴 经常发生</td><td>🟢 不可能</td></tr>
+        <tr><td>可维护性</td><td>🔴 差（牵一发而动全身）</td><td>🟢 好（改一个组件不影响其他）</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 新增: 声明式 vs 命令式 ===== -->
+<div class="slide" id="s19b" style="background:linear-gradient(135deg,#0f172a,#1a0533)">
+  <h2>🧠 声明式 vs 命令式 — 编程范式的根本区别</h2>
+  <div class="c2">
+    <div class="cc cc-r">
+      <div style="font-size:.88rem;font-weight:700;color:#f87171;margin-bottom:6px">❌ 命令式（Imperative）：告诉电脑"怎么做"</div>
+      <pre style="font-size:.72rem"><span class="cm">// ===== 任务：显示一个"已登录"提示 =====</span>
+<span class="cm">// 一步一步告诉电脑要做什么</span>
+
+<span class="cm">// 1. 找到容器</span>
+<span class="kw">var</span> container = document.<span class="fn">getElementById</span>(<span class="str">'app'</span>);
+<span class="cm">// 2. 创建 div</span>
+<span class="kw">var</span> div = document.<span class="fn">createElement</span>(<span class="str">'div'</span>);
+<span class="cm">// 3. 设置类名</span>
+div.className = <span class="str">'welcome'</span>;
+<span class="cm">// 4. 设置文本</span>
+div.textContent = <span class="str">'欢迎回来，张三'</span>;
+<span class="cm">// 5. 添加到容器</span>
+container.<span class="fn">appendChild</span>(div);
+<span class="cm">// 6. 设置点击事件</span>
+div.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, <span class="fn">handleClick</span>);
+
+<span class="cm">// 每一步都是"怎么做的细节"
+// 要更新内容：重复 2-5 步
+// 要删掉：container.removeChild(div)</span></pre>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-top:4px">命令式 = 你告诉电脑<b>怎么做</b>的每一个步骤</div>
+    </div>
+    <div>
+      <div class="cc cc-g" style="margin-bottom:10px">
+        <div style="font-size:.88rem;font-weight:700;color:#34d399;margin-bottom:6px">✅ 声明式（Declarative）：告诉电脑"要什么"</div>
+        <pre style="font-size:.72rem"><span class="cm">&lt;!-- ===== 任务：显示一个"已登录"提示 ===== --&gt;</span>
+<span class="cm">&lt;!-- 直接描述你想要的最终结果 --&gt;</span>
+
+&lt;<span class="kw">template</span>&gt;
+  &lt;<span class="fn">div</span>
+    <span class="kw">v-if</span>=<span class="str">"isLoggedIn"</span>
+    <span class="str">class</span>=<span class="str">"welcome"</span>
+    <span class="str">@click</span>=<span class="str">"handleClick"</span>
+  &gt;
+    欢迎回来，{{ userName }}
+  &lt;/<span class="fn">div</span>&gt;
+&lt;/<span class="kw">template</span>&gt;
+
+<span class="kw">const</span> isLoggedIn = <span class="fn">ref</span>(<span class="kw">true</span>);
+<span class="kw">const</span> userName = <span class="fn">ref</span>(<span class="str">'张三'</span>);
+<span class="kw">const</span> <span class="fn">handleClick</span> = () => { ... };
+
+<span class="cm">// 更新 → 改 userName.value = '李四' 即可
+// 删除 → isLoggedIn.value = false 即可
+// 没有 createElement / appendChild / remove！</span></pre>
+      </div>
+      <div style="padding:14px 18px;background:rgba(34,211,153,.06);border:1px solid rgba(34,211,153,.2);border-radius:10px">
+        <div style="font-size:.8rem;color:#34d399;font-weight:600;margin-bottom:4px">📌 生活类比</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.72);line-height:2">
+          <strong>命令式：</strong>去厨房，打开冰箱，拿一个鸡蛋，拿到碗边，磕开蛋壳，把蛋液倒进碗里...<br>
+          <strong>声明式：</strong>给我一个煎蛋。<br><br>
+          Vue 让你只描述 <strong>"我要什么"</strong>，框架帮你处理 <strong>"怎么做"</strong>。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 20. 总结 ===== -->
 <div class="slide" id="s20" style="background:radial-gradient(ellipse at 30% 60%,rgba(16,185,129,.2),transparent 60%),radial-gradient(ellipse at 70% 30%,rgba(99,102,241,.18),transparent 60%),linear-gradient(135deg,#0f0f1a,#1a1a2e)">
   <h2>📌 核心知识清单</h2>
@@ -1287,16 +1931,17 @@ utils/
 <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一页 →</button>
 
 <script>
-const T=20;let c=1;
+const slides=['s1','s2','s3','s4','s5','s6','s6a','s6b','s7','s8','s9','s10','s11','s12','s13','s14','s15','s16','s16a','s16b','s16c','s16d','s17','s17a','s17b','s18','s19','s19a','s19b','s20'];
+const T=slides.length;let c=0;
 function changeSlide(d){
- document.getElementById('s'+c).classList.remove('active');
- c=Math.min(Math.max(c+d,1),T);
- document.getElementById('s'+c).classList.add('active');
- document.getElementById('bar').style.width=((c-1)/(T-1)*100)+'%';
- document.getElementById('idx').textContent=String(c).padStart(2,'0')+' / '+String(T).padStart(2,'0');
- document.getElementById('pg').textContent=c+' / '+T;
- document.getElementById('prevBtn').style.opacity=c===1?'0.3':'1';
- document.getElementById('nextBtn').style.opacity=c===T?'0.3':'1';
+ document.getElementById(slides[c]).classList.remove('active');
+ c=Math.min(Math.max(c+d,0),T-1);
+ document.getElementById(slides[c]).classList.add('active');
+ document.getElementById('bar').style.width=(c/(T-1)*100)+'%';
+ document.getElementById('idx').textContent=String(c+1).padStart(2,'0')+' / '+String(T).padStart(2,'0');
+ document.getElementById('pg').textContent=(c+1)+' / '+T;
+ document.getElementById('prevBtn').style.opacity=c===0?'0.3':'1';
+ document.getElementById('nextBtn').style.opacity=c===T-1?'0.3':'1';
 }
 document.addEventListener('keydown',e=>{
  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();changeSlide(1)}
